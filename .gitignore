@@ -1,6 +1,9 @@
 # Maven
 /target/
 
+# Source files
+*.csv
+
 # Compiled class file
 *.class
 
