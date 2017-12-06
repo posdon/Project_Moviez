@@ -1,7 +1,11 @@
 package mmabdlrgp.Projet_Moviez;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
@@ -18,6 +22,16 @@ public class App
 	private final static String TAG_PATH = "./tags.csv";
 	private final static String GENOME_SCORE_PATH = "./genome-scores.csv";
 	private final static String GENOME_TAG_PATH = "./genome-tags.csv";
+	
+	/**
+	 * Retourne l'entier de la ligne row à l'indice index
+	 * @param row
+	 * @param index
+	 * @return
+	 */
+	public static int getInt(Row row, int index) {
+		return Integer.parseInt(row.getString(index));
+	}
 	
     public static void main( String[] args )
     {
@@ -37,19 +51,34 @@ public class App
 		// Loading database
 		dataFrameReader.csv(RATING_PATH).createOrReplaceTempView("ratings");
 		dataFrameReader.csv(MOVIE_PATH).createOrReplaceTempView("movies");
-		dataFrameReader.csv(LINK_PATH).createOrReplaceTempView("links");
 		dataFrameReader.csv(TAG_PATH).createOrReplaceTempView("tags");
 		dataFrameReader.csv(GENOME_SCORE_PATH).createOrReplaceTempView("genomeScores");
 		dataFrameReader.csv(GENOME_TAG_PATH).createOrReplaceTempView("genomeTags");
 		
+		System.out.println("Starting reading");
+		
+		
+		List<Row> users = spark.sql("SELECT userId, count(userId) FROM ratings GROUP BY userId").collectAsList();
+		Map<Integer,List<Integer>> usersModel = new HashMap<Integer, List<Integer>>();
+		for(Row row : users) {
+			List<Integer> userVector = new ArrayList<Integer>();
+			userVector.add(getInt(row,1));
+			usersModel.put(getInt(row,0), userVector);
+		}
+		
+		// Exemple de tétajointure
+		//spark.sql("SELECT * FROM ratings as R, movies as M WHERE R.movieId=M.movieId");
 		
 		//Exemple de manipulation
-		spark.sql("SELECT count(*) FROM ratings").show();
-		spark.sql("SELECT count(*) FROM movies").show();
-		spark.sql("SELECT count(*) FROM links").show();
-		spark.sql("SELECT count(*) FROM tags").show();
-		spark.sql("SELECT count(*) FROM genomeScores").show();
-		spark.sql("SELECT count(*) FROM genomeTags").show();
+		/*System.out.println(spark.sql("SELECT * FROM ratings").filter(new FilterFunction() {
+
+			public boolean call(Object arg0) throws Exception {
+				Row row = (Row) arg0;
+				return Double.parseDouble(row.getString(2)) < 6.0;
+			}
+		}).count());*/
+		
+		System.out.println("End reading");
 
     }
 }
