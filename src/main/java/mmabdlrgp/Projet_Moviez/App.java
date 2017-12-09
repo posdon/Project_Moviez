@@ -58,13 +58,23 @@ public class App
 		System.out.println("Starting reading");
 		
 		
-		List<Row> users = spark.sql("SELECT userId, count(userId) FROM ratings GROUP BY userId").collectAsList();
+		/*List<Row> users = spark.sql("SELECT userId, count(userId) FROM ratings GROUP BY userId").collectAsList();
 		Map<Integer,List<Integer>> usersModel = new HashMap<Integer, List<Integer>>();
 		for(Row row : users) {
 			List<Integer> userVector = new ArrayList<Integer>();
 			userVector.add(getInt(row,1));
 			usersModel.put(getInt(row,0), userVector);
+		}*/
+		
+		//Number of rating for every movie 
+		List<Row> mostRatedMovies = spark.sql("SELECT title,count(R.movieId) FROM ratings as R, movies as M WHERE R.movieId=M.movieId GROUP BY title").collectAsList();
+		Map<String,List<Integer>> mostRatedMoviesModel = new HashMap<String, List<Integer>>();
+		System.out.println("End sql");
+		for(Row row : mostRatedMovies) {
+			System.out.println(row.get(0)+" =======> "+row.get(1));
 		}
+		
+		//mean
 		
 		// Exemple de tétajointure
 		//spark.sql("SELECT * FROM ratings as R, movies as M WHERE R.movieId=M.movieId");
