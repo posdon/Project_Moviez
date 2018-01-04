@@ -1,10 +1,9 @@
 package mmabdlrgp.Projet_Moviez;
 
-import java.util.Arrays;
 import java.util.function.Function;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.ReduceFunction;
 import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Row;
@@ -14,7 +13,6 @@ import org.apache.spark.sql.SparkSession.Builder;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
-import scala.util.Try;
 
 /**
  * Hello world!
@@ -64,24 +62,34 @@ public class App
 						 
 		 
 				 
-		 
-		JavaRDD<Row> ratingsRow = dataFrameReader.csv(RATING_PATH).javaRDD();
-		JavaRDD<Rating> ratingRDD = ratingsRow.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
+		/**
+		 * Load Rating data
+		 */
+		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD().map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 		
+		
+		/**
+		 * Group ratings
+		 */
+		
+		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByProduct = ratingRDD.groupBy(rating -> rating.product());
+		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		 
 		/**
 		 * Load User data
-		 * Warning : Need the distinct or you will have one user by ratings, and not by idUser
+		 * Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		 */
-		JavaRDD<User> userRDD = ratingsRow.map(row -> Integer.parseInt(row.getAs(0))).distinct().map(id -> new User(id));
+		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
 
 		
-		System.out.println("Total number of movies : "+movieRDD.count());
-		System.out.println("Total number of ratings  : " + ratingRDD.count());
-		System.out.println("Total number of user  : " + userRDD.count());
+		
 		
 		 
-		
+		System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
+		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
+		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
+		System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
+		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
 
     }
 }
