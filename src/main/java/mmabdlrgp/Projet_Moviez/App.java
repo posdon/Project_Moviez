@@ -1,8 +1,11 @@
 package mmabdlrgp.Projet_Moviez;
 
+import java.util.Arrays;
 import java.util.function.Function;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.ReduceFunction;
+import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
@@ -10,6 +13,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
+import mmabdlrgp.Projet_Moviez.model.User;
 import scala.util.Try;
 
 /**
@@ -49,18 +53,35 @@ public class App
 		
 		SQLContext sqlContext = spark.sqlContext();
 		
+		final DataFrameReader dataFrameReader = spark.read();
+		dataFrameReader.option("header", "true");
 		
 		/**
 		 * Load Movie data
 		 */
-		final DataFrameReader dataFrameReader = spark.read();
-		dataFrameReader.option("header", "true");
 		JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
 				.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2)));
-				
-			 
+						 
 		 
-		System.out.println(movieRDD.first()); 
+				 
+		 
+		JavaRDD<Row> ratingsRow = dataFrameReader.csv(RATING_PATH).javaRDD();
+		JavaRDD<Rating> ratingRDD = ratingsRow.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
+		
+		 
+		/**
+		 * Load User data
+		 * Warning : Need the distinct or you will have one user by ratings, and not by idUser
+		 */
+		JavaRDD<User> userRDD = ratingsRow.map(row -> Integer.parseInt(row.getAs(0))).distinct().map(id -> new User(id));
+
+		
+		System.out.println("Total number of movies : "+movieRDD.count());
+		System.out.println("Total number of ratings  : " + ratingRDD.count());
+		System.out.println("Total number of user  : " + userRDD.count());
+		
+		 
+		
 
     }
 }
