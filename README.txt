@@ -1,3 +1,6 @@
+We followed this tutorial : http://www.stepbystepcoder.com/building-a-recommendation-engine-with-apache-spark-java-part-1/
+
+
 
 Usage License
 =============

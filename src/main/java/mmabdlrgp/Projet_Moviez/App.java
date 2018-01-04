@@ -1,16 +1,16 @@
 package mmabdlrgp.Projet_Moviez;
 
-import java.util.HashMap;
+import java.util.function.Function;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.SparkSession.Builder;
 
-
-import scala.Tuple2;
-import scala.Tuple3;
+import mmabdlrgp.Projet_Moviez.model.Movie;
+import scala.util.Try;
 
 /**
  * Hello world!
@@ -38,9 +38,29 @@ public class App
 	
     public static void main( String[] args )
     {
-    	System.out.println("Start reading");
+    	
+		/**
+		 * Create SQL contex
+		 */
+		SparkSession spark = new Builder()
+			     .appName("Reommendation Engine")
+			     .master("local")
+			     .getOrCreate();		
 		
-		System.out.println("End reading");
+		SQLContext sqlContext = spark.sqlContext();
+		
+		
+		/**
+		 * Load Movie data
+		 */
+		final DataFrameReader dataFrameReader = spark.read();
+		dataFrameReader.option("header", "true");
+		JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
+				.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2)));
+				
+			 
+		 
+		System.out.println(movieRDD.first()); 
 
     }
 }
