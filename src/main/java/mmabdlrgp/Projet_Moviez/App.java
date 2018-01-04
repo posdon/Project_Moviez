@@ -8,9 +8,13 @@ import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
@@ -102,14 +106,68 @@ public class App
 		
 		usersDF.printSchema();
 		
-		System.out.println("Total Number of users df : " + usersDF.count());
+		/* Examples
+		System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
 		
 		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
 		
 		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
 		
 		for(Row row : filteredUsers){
-			System.out.print("UserId : " + row.getAs("userId"));
-		}
+			System.out.println("UserId : " + row.getAs("userId"));
+		}*/
+		
+		
+		/**
+		 * Ratings DF
+		 * 
+		 */
+		StructType structType = new StructType(new StructField[]{DataTypes.createStructField("user", DataTypes.IntegerType, true),
+				DataTypes.createStructField("product", DataTypes.IntegerType, true),
+				DataTypes.createStructField("rating", DataTypes.DoubleType, true)});
+		
+ 
+		JavaRDD<Row> ratingRowRdd = ratingRDD.map(rating -> RowFactory.create(rating.user() , rating.product() , rating.rating()));
+		
+		
+		Dataset<Row> schemaPeople = sqlContext.createDataFrame(ratingRowRdd, structType);
+		schemaPeople.createOrReplaceTempView("ratings");
+		
+		schemaPeople.printSchema();
+ 
+		/* Example
+		System.out.println("Number of rows : (user = 1 and product = 110 ) : " + teenagers.count());
+		
+		List<Row> filteredDF = teenagers.collectAsList();
+		
+		for(Row row : filteredDF){
+			System.out.print("UserId : " + row.getAs("user"));
+			System.out.print("	MovieId : " + row.getAs("product"));
+			System.out.println("	Rating : " + row.getAs("rating"));
+		}*/
+			
+		
+		/**
+		 * Movie DF
+		 */
+		
+		Dataset<Row> moviesDF = sqlContext.createDataFrame(movieRDD, Movie.class);
+		moviesDF.createOrReplaceTempView("movies");
+		
+		moviesDF.printSchema();
+		
+		/* Examples
+		System.out.println("Total Number of movies df : " + usersDF.count());
+		
+		Dataset<Row> filteredMoviesDF = sqlContext.sql("select * from movies where movies.movieId in (19,4000)");
+		
+		List<Row> filteredMovies  = filteredMoviesDF.collectAsList();
+		
+		for(Row row : filteredMovies){
+			System.out.print("MovieId : " + row.getAs("movieId"));
+			System.out.print("	Title : " + row.getAs("title"));
+			System.out.println("	Genres : " + row.getAs("genres"));
+		}*/
+		
     }
 }
