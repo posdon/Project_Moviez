@@ -1,11 +1,12 @@
 package mmabdlrgp.Projet_Moviez;
 
-import java.util.function.Function;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
@@ -85,11 +86,30 @@ public class App
 		
 		
 		 
-		System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
-		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
-		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
-		System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
-		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
+		//System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
+		//System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
+		//System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
+		//System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
+		//System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
 
+		
+		/**
+		 * Users DF
+		 */
+		
+		Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
+		usersDF.createOrReplaceTempView("users");
+		
+		usersDF.printSchema();
+		
+		System.out.println("Total Number of users df : " + usersDF.count());
+		
+		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
+		
+		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
+		
+		for(Row row : filteredUsers){
+			System.out.print("UserId : " + row.getAs("userId"));
+		}
     }
 }
