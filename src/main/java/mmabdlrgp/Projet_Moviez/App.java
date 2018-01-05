@@ -169,5 +169,20 @@ public class App
 			System.out.println("	Genres : " + row.getAs("genres"));
 		}*/
 		
+		
+		/* Split in training and testing set */
+
+        JavaRDD<Rating>[] ratingSplits = ratingRDD.randomSplit(new double[] { 0.8, 0.2 });
+
+        JavaRDD<Rating> trainingRatingRDD = ratingSplits[0].cache();
+        JavaRDD<Rating> testRatingRDD = ratingSplits[1].cache();
+
+        long numOfTrainingRating = trainingRatingRDD.count();
+        long numOfTestingRating = testRatingRDD.count();
+
+        System.out.println("Number of training Rating : " + numOfTrainingRating);
+        System.out.println("Number of training Testing : " + numOfTestingRating);
+
+		
     }
 }
