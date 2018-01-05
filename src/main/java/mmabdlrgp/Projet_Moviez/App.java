@@ -76,18 +76,18 @@ public class App
 		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 
-		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie = ratingRDD.groupBy(rating -> rating.product());
+		//JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie = ratingRDD.groupBy(rating -> rating.product());
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
-		printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
+		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
 
 		
 		/**
 		 * Creation of DF
 		 */
-		Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
+		/*Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
 		usersDF.createOrReplaceTempView("users");
 		usersDF.printSchema();
 		printExamplePostUserDF(usersDF);
@@ -101,12 +101,15 @@ public class App
 		Dataset<Row> ratingsDF = sqlContext.createDataFrame(ratingRowRdd, structType);
 		ratingsDF.createOrReplaceTempView("ratings");
 		ratingsDF.printSchema();
-		printExamplePostRatingDF(ratingsDF);
+		printExamplePostRatingDF(sqlContext.sql("SELECT * FROM ratings WHERE ratings.user = 1 and product in (110)"));
 
 		Dataset<Row> moviesDF = sqlContext.createDataFrame(movieRDD, Movie.class);
 		moviesDF.createOrReplaceTempView("movies");
 		moviesDF.printSchema();
 		printExamplePostMovieDF(moviesDF);
+		*/
+		
+		
 		
 		
 		/**
@@ -118,7 +121,9 @@ public class App
 
         printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
 
-        /* Learning the prediction model using ALS (Alternating Least Squares) */
+        /**
+         *  Learning the prediction model using ALS (Alternating Least Squares)
+         */
         ALS als = new ALS();
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
         
@@ -176,6 +181,7 @@ public class App
     }
     
     public static void printExamplePostRatingDF(Dataset<Row> ratingDF) {
+    	
 		System.out.println("Number of rows : (user = 1 and movie = 110 ) : " + ratingDF.count());
 		
 		List<Row> filteredDF = ratingDF.collectAsList();
