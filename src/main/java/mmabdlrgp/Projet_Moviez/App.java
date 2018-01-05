@@ -20,6 +20,7 @@ import org.apache.spark.sql.types.StructType;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
+import mmabdlrgp.Projet_Moviez.model.UserProductTuple;
 import scala.Tuple2;
 
 /**
@@ -148,9 +149,21 @@ public class App
  
         JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserMovieRDD);
         
-        System.out.println("Test predictions");
+        /*System.out.println("Test predictions");
         predictionsForTestRDD.take(10).stream().forEach(rating -> {
             System.out.println("MovieId : " + rating.product() + "-- Rating : " + rating.rating());
+        });*/
+        
+        
+        JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
+        
+        
+        JavaPairRDD<UserProductTuple, Double> testKeyedByUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
+        
+        JavaPairRDD<UserProductTuple, Tuple2<Double,Double>> testAndPredictionsJoinedRDD  = testKeyedByUserProductRDD.join(predictionsKeyedByUserProductRDD);
+        
+        testAndPredictionsJoinedRDD.take(10).forEach(k ->{
+            System.out.println("UserID : " + k._1.getUserId() + "||ProductId: " + k._1.getProductId() + "|| Test Rating : " + k._2._1 + "|| Predicted Rating : " + k._2._2);
         });
     }
     
