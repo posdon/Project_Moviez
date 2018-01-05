@@ -20,6 +20,7 @@ import org.apache.spark.sql.types.StructType;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
+import scala.Tuple2;
 
 /**
  * Hello world!
@@ -86,13 +87,11 @@ public class App
 		/**
 		 * Users DF
 		 */
-		
 		Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
 		usersDF.createOrReplaceTempView("users");
-		
 		usersDF.printSchema();
 		
-		//printExamplePostDF(usersDF);
+		//printExamplePostUserDF(usersDF);
 		
 		
 		/**
@@ -107,44 +106,21 @@ public class App
 		JavaRDD<Row> ratingRowRdd = ratingRDD.map(rating -> RowFactory.create(rating.user() , rating.product() , rating.rating()));
 		
 		
-		Dataset<Row> schemaPeople = sqlContext.createDataFrame(ratingRowRdd, structType);
-		schemaPeople.createOrReplaceTempView("ratings");
-		
-		schemaPeople.printSchema();
+		Dataset<Row> ratingsDF = sqlContext.createDataFrame(ratingRowRdd, structType);
+		ratingsDF.createOrReplaceTempView("ratings");
+		ratingsDF.printSchema();
  
-		/* Example
-		System.out.println("Number of rows : (user = 1 and product = 110 ) : " + teenagers.count());
-		
-		List<Row> filteredDF = teenagers.collectAsList();
-		
-		for(Row row : filteredDF){
-			System.out.print("UserId : " + row.getAs("user"));
-			System.out.print("	MovieId : " + row.getAs("product"));
-			System.out.println("	Rating : " + row.getAs("rating"));
-		}*/
+		//printExamplePostRatingDF(ratingsDF);
 			
 		
 		/**
 		 * Movie DF
 		 */
-		
 		Dataset<Row> moviesDF = sqlContext.createDataFrame(movieRDD, Movie.class);
 		moviesDF.createOrReplaceTempView("movies");
-		
 		moviesDF.printSchema();
 		
-		/* Examples
-		System.out.println("Total Number of movies df : " + usersDF.count());
-		
-		Dataset<Row> filteredMoviesDF = sqlContext.sql("select * from movies where movies.movieId in (19,4000)");
-		
-		List<Row> filteredMovies  = filteredMoviesDF.collectAsList();
-		
-		for(Row row : filteredMovies){
-			System.out.print("MovieId : " + row.getAs("movieId"));
-			System.out.print("	Title : " + row.getAs("title"));
-			System.out.println("	Genres : " + row.getAs("genres"));
-		}*/
+		// printExamplePostMovieDF(movieDF);
 		
 		
 		/* Split in training and testing set */
@@ -165,11 +141,18 @@ public class App
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
         
         /* Example for 5 best recommendation for user 1 */
-        Rating[] recommendedsFor1 = model.recommendProducts(1, 5);
-        System.out.println("Recommendations for 1");
-        for (Rating ratings : recommendedsFor1) {
-            System.out.println("Product id : " + ratings.product() + "-- Rating : " + ratings.rating());
-        }
+        //printBestRecommandationForUser(model, 1, 5);
+        
+        
+        
+        JavaPairRDD<Integer, Integer> testUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
+ 
+        JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserProductRDD);
+        
+        System.out.println("Test predictions");
+        predictionsForTestRDD.take(10).stream().forEach(rating -> {
+            System.out.println("Product id : " + rating.product() + "-- Rating : " + rating.rating());
+        });
     }
     
     /**
@@ -188,7 +171,7 @@ public class App
 		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
     }
 
-    public static void printExamplePostDF(Dataset<Row> usersDF) {
+    public static void printExamplePostUserDF(Dataset<Row> usersDF) {
     	System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
 		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
 		
@@ -197,5 +180,39 @@ public class App
 		for(Row row : filteredUsers){
 			System.out.println("UserId : " + row.getAs("userId"));
 		}
+    }
+    
+    public static void printExamplePostRatingDF(Dataset<Row> ratingDF) {
+		System.out.println("Number of rows : (user = 1 and product = 110 ) : " + ratingDF.count());
+		
+		List<Row> filteredDF = ratingDF.collectAsList();
+		
+		for(Row row : filteredDF){
+			System.out.print("UserId : " + row.getAs("user"));
+			System.out.print("	MovieId : " + row.getAs("product"));
+			System.out.println("	Rating : " + row.getAs("rating"));
+		}
+    }
+    
+    public static void printExamplePostMovieDF(Dataset<Row> movieDF) {
+    	System.out.println("Total Number of movies df : " + movieDF.count());
+		
+		Dataset<Row> filteredMoviesDF = sqlContext.sql("select * from movies where movies.movieId in (19,4000)");
+		
+		List<Row> filteredMovies  = filteredMoviesDF.collectAsList();
+		
+		for(Row row : filteredMovies){
+			System.out.print("MovieId : " + row.getAs("movieId"));
+			System.out.print("	Title : " + row.getAs("title"));
+			System.out.println("	Genres : " + row.getAs("genres"));
+		}
+    }
+
+    public static void printBestRecommandationForUser(MatrixFactorizationModel model, int userId, int nbRecommandation) {
+    	Rating[] recommendedsFor = model.recommendProducts(userId, nbRecommandation);
+        System.out.println("Recommendations for "+userId);
+        for (Rating ratings : recommendedsFor) {
+            System.out.println("Product id : " + ratings.product() + "-- Rating : " + ratings.rating());
+        }
     }
 }
