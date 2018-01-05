@@ -81,78 +81,59 @@ public class App
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
-
-		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
+		printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
 
 		
 		/**
-		 * Users DF
+		 * Creation of DF
 		 */
 		Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
 		usersDF.createOrReplaceTempView("users");
 		usersDF.printSchema();
+		printExamplePostUserDF(usersDF);
 		
-		//printExamplePostUserDF(usersDF);
-		
-		
-		/**
-		 * Ratings DF
-		 * A rating is like a Tuple3<Int,Int,Double> as [user,product,rating]. Here our product are our movies.
-		 */
+		// A rating is like a Tuple3<Int,Int,Double> as [user,product,rating]. Here our product are our movies.
 		StructType structType = new StructType(new StructField[]{DataTypes.createStructField("user", DataTypes.IntegerType, true),
 				DataTypes.createStructField("product", DataTypes.IntegerType, true),
 				DataTypes.createStructField("rating", DataTypes.DoubleType, true)});
-		
- 
 		JavaRDD<Row> ratingRowRdd = ratingRDD.map(rating -> RowFactory.create(rating.user() , rating.product() , rating.rating()));
-		
 		
 		Dataset<Row> ratingsDF = sqlContext.createDataFrame(ratingRowRdd, structType);
 		ratingsDF.createOrReplaceTempView("ratings");
 		ratingsDF.printSchema();
- 
-		//printExamplePostRatingDF(ratingsDF);
-			
-		
-		/**
-		 * Movie DF
-		 */
+		printExamplePostRatingDF(ratingsDF);
+
 		Dataset<Row> moviesDF = sqlContext.createDataFrame(movieRDD, Movie.class);
 		moviesDF.createOrReplaceTempView("movies");
 		moviesDF.printSchema();
+		printExamplePostMovieDF(moviesDF);
 		
-		// printExamplePostMovieDF(movieDF);
 		
-		
-		/* Split in training and testing set */
-
+		/**
+		 * Split into training and testing sets
+		 */
         JavaRDD<Rating>[] ratingSplits = ratingRDD.randomSplit(new double[] { 0.8, 0.2 });
-
         JavaRDD<Rating> trainingRatingRDD = ratingSplits[0].cache();
         JavaRDD<Rating> testRatingRDD = ratingSplits[1].cache();
 
-        long numOfTrainingRating = trainingRatingRDD.count();
-        long numOfTestingRating = testRatingRDD.count();
-
-        System.out.println("Number of training Rating : " + numOfTrainingRating);
-        System.out.println("Number of training Testing : " + numOfTestingRating);
+        printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
 
         /* Learning the prediction model using ALS (Alternating Least Squares) */
         ALS als = new ALS();
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
         
         /* Example for 5 best recommendation for user 1 */
-        //printBestRecommandationForUser(model, 1, 5);
+        printBestRecommandationForUser(model, 1, 5);
         
         
         JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
  
         JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserMovieRDD);
         
-        /*System.out.println("Test predictions");
+        System.out.println("Test predictions");
         predictionsForTestRDD.take(10).stream().forEach(rating -> {
             System.out.println("MovieId : " + rating.product() + "-- Rating : " + rating.rating());
-        });*/
+        });
         
         
         JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
@@ -226,5 +207,13 @@ public class App
         for (Rating ratings : recommendedsFor) {
             System.out.println("MovieId : " + ratings.product() + "-- Rating : " + ratings.rating());
         }
+    }
+
+    public static void printExamplePostSplittingSet(JavaRDD<Rating> trainingRatingRDD, JavaRDD<Rating> testRatingRDD) {
+    	long numOfTrainingRating = trainingRatingRDD.count();
+        long numOfTestingRating = testRatingRDD.count();
+
+        System.out.println("Number of training Rating : " + numOfTrainingRating);
+        System.out.println("Number of training Testing : " + numOfTestingRating);
     }
 }
