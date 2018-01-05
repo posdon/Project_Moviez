@@ -75,13 +75,13 @@ public class App
 		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 
-		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByProduct = ratingRDD.groupBy(rating -> rating.product());
+		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie = ratingRDD.groupBy(rating -> rating.product());
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
 
-		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByProduct,ratingsGroupByUser);
+		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
 
 		
 		/**
@@ -96,7 +96,7 @@ public class App
 		
 		/**
 		 * Ratings DF
-		 * 
+		 * A rating is like a Tuple3<Int,Int,Double> as [user,product,rating]. Here our product are our movies.
 		 */
 		StructType structType = new StructType(new StructField[]{DataTypes.createStructField("user", DataTypes.IntegerType, true),
 				DataTypes.createStructField("product", DataTypes.IntegerType, true),
@@ -144,14 +144,13 @@ public class App
         //printBestRecommandationForUser(model, 1, 5);
         
         
-        
-        JavaPairRDD<Integer, Integer> testUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
+        JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
  
-        JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserProductRDD);
+        JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserMovieRDD);
         
         System.out.println("Test predictions");
         predictionsForTestRDD.take(10).stream().forEach(rating -> {
-            System.out.println("Product id : " + rating.product() + "-- Rating : " + rating.rating());
+            System.out.println("MovieId : " + rating.product() + "-- Rating : " + rating.rating());
         });
     }
     
@@ -160,14 +159,14 @@ public class App
      * @param movieRDD
      * @param ratingRDD
      * @param userRDD
-     * @param ratingsGroupByProduct
+     * @param ratingsGroupByMovie
      * @param ratingsGroupByUser
      */
-    public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByProduct, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
+    public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
     	System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
 		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
 		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
-		System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
+		System.out.println("Total number of movies rated   : " + ratingsGroupByMovie.count()); // Value = 45115
 		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
     }
 
@@ -183,7 +182,7 @@ public class App
     }
     
     public static void printExamplePostRatingDF(Dataset<Row> ratingDF) {
-		System.out.println("Number of rows : (user = 1 and product = 110 ) : " + ratingDF.count());
+		System.out.println("Number of rows : (user = 1 and movie = 110 ) : " + ratingDF.count());
 		
 		List<Row> filteredDF = ratingDF.collectAsList();
 		
@@ -212,7 +211,7 @@ public class App
     	Rating[] recommendedsFor = model.recommendProducts(userId, nbRecommandation);
         System.out.println("Recommendations for "+userId);
         for (Rating ratings : recommendedsFor) {
-            System.out.println("Product id : " + ratings.product() + "-- Rating : " + ratings.rating());
+            System.out.println("MovieId : " + ratings.product() + "-- Rating : " + ratings.rating());
         }
     }
 }
