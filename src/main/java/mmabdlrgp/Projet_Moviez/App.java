@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.mllib.recommendation.ALS;
+import org.apache.spark.mllib.recommendation.MatrixFactorizationModel;
 import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
@@ -33,6 +35,9 @@ public class App
 	private final static String GENOME_SCORE_PATH = "./genome-scores.csv";
 	private final static String GENOME_TAG_PATH = "./genome-tags.csv";
 	
+	private static SparkSession spark;
+	private static SQLContext sqlContext;
+	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
 	 * @param row
@@ -49,52 +54,33 @@ public class App
 		/**
 		 * Create SQL contex
 		 */
-		SparkSession spark = new Builder()
+		spark = new Builder()
 			     .appName("Reommendation Engine")
 			     .master("local")
 			     .getOrCreate();		
 		
-		SQLContext sqlContext = spark.sqlContext();
+		sqlContext = spark.sqlContext();
 		
 		final DataFrameReader dataFrameReader = spark.read();
 		dataFrameReader.option("header", "true");
 		
+		
 		/**
-		 * Load Movie data
+		 * Load datas
 		 */
 		JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
 				.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2)));
-						 
-		 
-				 
-		/**
-		 * Load Rating data
-		 */
-		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD().map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 		
-		
-		/**
-		 * Group ratings
-		 */
-		
+		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
+				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
+
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByProduct = ratingRDD.groupBy(rating -> rating.product());
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
-		 
-		/**
-		 * Load User data
-		 * Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
-		 */
+		
+		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
 
-		
-		
-		
-		 
-		//System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
-		//System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
-		//System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
-		//System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
-		//System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
+		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByProduct,ratingsGroupByUser);
 
 		
 		/**
@@ -106,16 +92,7 @@ public class App
 		
 		usersDF.printSchema();
 		
-		/* Examples
-		System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
-		
-		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
-		
-		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
-		
-		for(Row row : filteredUsers){
-			System.out.println("UserId : " + row.getAs("userId"));
-		}*/
+		//printExamplePostDF(usersDF);
 		
 		
 		/**
@@ -183,6 +160,42 @@ public class App
         System.out.println("Number of training Rating : " + numOfTrainingRating);
         System.out.println("Number of training Testing : " + numOfTestingRating);
 
+        /* Learning the prediction model using ALS (Alternating Least Squares) */
+        ALS als = new ALS();
+        MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
+        
+        /* Example for 5 best recommendation for user 1 */
+        Rating[] recommendedsFor1 = model.recommendProducts(1, 5);
+        System.out.println("Recommendations for 1");
+        for (Rating ratings : recommendedsFor1) {
+            System.out.println("Product id : " + ratings.product() + "-- Rating : " + ratings.rating());
+        }
+    }
+    
+    /**
+     * Print some results for analyse Loaded data.
+     * @param movieRDD
+     * @param ratingRDD
+     * @param userRDD
+     * @param ratingsGroupByProduct
+     * @param ratingsGroupByUser
+     */
+    public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByProduct, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
+    	System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
+		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
+		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
+		System.out.println("Total number of movies rated   : " + ratingsGroupByProduct.count()); // Value = 45115
+		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
+    }
+
+    public static void printExamplePostDF(Dataset<Row> usersDF) {
+    	System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
+		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
 		
+		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
+		
+		for(Row row : filteredUsers){
+			System.out.println("UserId : " + row.getAs("userId"));
+		}
     }
 }
