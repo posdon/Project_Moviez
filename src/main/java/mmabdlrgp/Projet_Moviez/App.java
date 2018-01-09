@@ -1,6 +1,7 @@
 package mmabdlrgp.Projet_Moviez;
 
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -16,6 +17,7 @@ import org.apache.spark.sql.SparkSession.Builder;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
+import mmabdlrgp.Projet_Moviez.model.distance.Distance;
 import scala.Tuple2;
 
 /**
@@ -95,37 +97,43 @@ public class App
          */
         ALS als = new ALS();
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
-        
-        //printBestRecommandationForUser(model, 1, 5);
-        
-        
+
         JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
- 
         JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD);
         
-        
-        /**
-         * Load the current user
-         */
-		JavaRDD<Rating> currentRDD = dataFrameReader.csv(USER_PATH).javaRDD()
-				.map(row -> new Rating(0,Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1))));
-        
-		
-        /**
-         * Calculate betweenness from each user and the current user
-         */
-        
-        
-        
-        /**
-         * Get the X first closest user
-         */
-        
-        
-        /**
-         * 
-         */
-        
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Waiting your order chief !");
+        while(scanner.hasNextLine()) {
+        	
+        	/**
+        	 * Load the current user
+        	 */
+        	JavaRDD<Rating> currentRDD = dataFrameReader.csv(USER_PATH).javaRDD()
+        			.map(row -> new Rating(0,Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1))));
+        	
+        	List<Integer> currentMovies = dataFrameReader.csv(USER_PATH).javaRDD()
+        			.map(row -> Integer.parseInt(row.getAs(0))).collect();
+        	
+        	/**
+        	 * Calculate betweenness from each user and the current user
+        	 */
+        	JavaRDD<Rating> onlyUsefullRating = alsResults.filter(rating -> currentMovies.contains(rating.product()));
+        	printRatingJavaRDDFirstContent(onlyUsefullRating,10);
+        	//JavaRDD<Rating> onlyOneUserRating = onlyUsefullRating.filter( rating -> rating.user() == 1);
+        	//System.out.println(Distance.EuclidienDistance(currentRDD.collect(), onlyOneUserRating.collect()));
+        	
+        	
+        	/**
+        	 * Get the X first closest user
+        	 */
+        	
+        	
+        	/**
+        	 * 
+        	 */
+        	
+        	
+        }
         
         //JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
         
@@ -138,6 +146,15 @@ public class App
         //    System.out.println("UserID : " + k._1.getUserId() + "||ProductId: " + k._1.getProductId() + "|| Test Rating : " + k._2._1 + "|| Predicted Rating : " + k._2._2);
         //});
         
+    }
+    
+    /**
+     * Print the nb first ratings
+     * @param javaRDD
+     * @param nb
+     */
+    public static void printRatingJavaRDDFirstContent(JavaRDD<Rating> javaRDD, Integer nb) {
+    	javaRDD.take(nb).forEach(k -> System.out.println("UserID : " + k.user() + "||ProductId: " + k.product() + "|| Test Rating : " + k.rating()));
     }
     
     /**
