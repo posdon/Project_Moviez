@@ -10,17 +10,12 @@ import org.apache.spark.mllib.recommendation.Rating;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
-import mmabdlrgp.Projet_Moviez.model.UserProductTuple;
 import scala.Tuple2;
 
 /**
@@ -33,6 +28,7 @@ public class App
 	private final static String RATING_PATH = "./ratings.csv";
 	private final static String MOVIE_PATH = "./movies.csv";
 	private final static String LINK_PATH = "./links.csv";
+	private final static String USER_PATH = "./user.csv";
 	private final static String TAG_PATH = "./tags.csv";
 	private final static String GENOME_SCORE_PATH = "./genome-scores.csv";
 	private final static String GENOME_TAG_PATH = "./genome-tags.csv";
@@ -76,38 +72,11 @@ public class App
 		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 
-		//JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie = ratingRDD.groupBy(rating -> rating.product());
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
 		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
-		//printExampleLoadedData(movieRDD,ratingRDD,userRDD,ratingsGroupByMovie,ratingsGroupByUser);
 
-		
-		/**
-		 * Creation of DF
-		 */
-		/*Dataset<Row> usersDF = sqlContext.createDataFrame(userRDD, User.class);
-		usersDF.createOrReplaceTempView("users");
-		usersDF.printSchema();
-		printExamplePostUserDF(usersDF);
-		
-		// A rating is like a Tuple3<Int,Int,Double> as [user,product,rating]. Here our product are our movies.
-		StructType structType = new StructType(new StructField[]{DataTypes.createStructField("user", DataTypes.IntegerType, true),
-				DataTypes.createStructField("product", DataTypes.IntegerType, true),
-				DataTypes.createStructField("rating", DataTypes.DoubleType, true)});
-		JavaRDD<Row> ratingRowRdd = ratingRDD.map(rating -> RowFactory.create(rating.user() , rating.product() , rating.rating()));
-		
-		Dataset<Row> ratingsDF = sqlContext.createDataFrame(ratingRowRdd, structType);
-		ratingsDF.createOrReplaceTempView("ratings");
-		ratingsDF.printSchema();
-		printExamplePostRatingDF(sqlContext.sql("SELECT * FROM ratings WHERE ratings.user = 1 and product in (110)"));
-
-		Dataset<Row> moviesDF = sqlContext.createDataFrame(movieRDD, Movie.class);
-		moviesDF.createOrReplaceTempView("movies");
-		moviesDF.printSchema();
-		printExamplePostMovieDF(moviesDF);
-		*/
 		
 		
 		
@@ -116,10 +85,10 @@ public class App
 		 * Split into training and testing sets
 		 */
         JavaRDD<Rating>[] ratingSplits = ratingRDD.randomSplit(new double[] { 0.8, 0.2 });
-        JavaRDD<Rating> trainingRatingRDD = ratingSplits[0].cache();
-        JavaRDD<Rating> testRatingRDD = ratingSplits[1].cache();
+        JavaRDD<Rating> trainingRatingRDD = ratingSplits[0];
+        JavaRDD<Rating> testRatingRDD = ratingSplits[1];
 
-        printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
+        //printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
 
         /**
          *  Learning the prediction model using ALS (Alternating Least Squares)
@@ -127,30 +96,48 @@ public class App
         ALS als = new ALS();
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
         
-        /* Example for 5 best recommendation for user 1 */
-        printBestRecommandationForUser(model, 1, 5);
+        //printBestRecommandationForUser(model, 1, 5);
         
         
         JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
  
-        JavaRDD<Rating> predictionsForTestRDD = model.predict(testUserMovieRDD);
-        
-        System.out.println("Test predictions");
-        predictionsForTestRDD.take(10).stream().forEach(rating -> {
-            System.out.println("MovieId : " + rating.product() + "-- Rating : " + rating.rating());
-        });
+        JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD);
         
         
-        JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
+        /**
+         * Load the current user
+         */
+		JavaRDD<Rating> currentRDD = dataFrameReader.csv(USER_PATH).javaRDD()
+				.map(row -> new Rating(0,Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1))));
+        
+		
+        /**
+         * Calculate betweenness from each user and the current user
+         */
         
         
-        JavaPairRDD<UserProductTuple, Double> testKeyedByUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
         
-        JavaPairRDD<UserProductTuple, Tuple2<Double,Double>> testAndPredictionsJoinedRDD  = testKeyedByUserProductRDD.join(predictionsKeyedByUserProductRDD);
+        /**
+         * Get the X first closest user
+         */
         
-        testAndPredictionsJoinedRDD.take(10).forEach(k ->{
-            System.out.println("UserID : " + k._1.getUserId() + "||ProductId: " + k._1.getProductId() + "|| Test Rating : " + k._2._1 + "|| Predicted Rating : " + k._2._2);
-        });
+        
+        /**
+         * 
+         */
+        
+        
+        //JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
+        
+        
+        //JavaPairRDD<UserProductTuple, Double> testKeyedByUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
+        
+        //JavaPairRDD<UserProductTuple, Tuple2<Double,Double>> testAndPredictionsJoinedRDD  = testKeyedByUserProductRDD.join(predictionsKeyedByUserProductRDD);
+        
+        //testAndPredictionsJoinedRDD.take(10).forEach(k ->{
+        //    System.out.println("UserID : " + k._1.getUserId() + "||ProductId: " + k._1.getProductId() + "|| Test Rating : " + k._2._1 + "|| Predicted Rating : " + k._2._2);
+        //});
+        
     }
     
     /**
