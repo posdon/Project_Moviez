@@ -4,6 +4,6 @@ import java.util.Map;
 
 public interface Distance {
 
-	public Map<Integer, Double> Distance(Map<Integer,Double> currentRating,
-			Map<Integer, Map<Integer, Double>> otherRatings, Map<Integer, Double> userWeight);
+	public Double distance(Map<Integer, Double> currentRating,
+			Map<Integer, Double> otherRatings);
 }
