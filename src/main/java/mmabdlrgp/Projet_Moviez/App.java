@@ -1,6 +1,8 @@
 package mmabdlrgp.Projet_Moviez;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.spark.api.java.JavaPairRDD;
@@ -68,8 +70,9 @@ public class App
 		/**
 		 * Load datas
 		 */
-		JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
-				.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2)));
+		System.out.println("Start data loading...");
+		//JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
+		//		.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2))).cache();
 		
 		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
@@ -77,52 +80,78 @@ public class App
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
-		JavaRDD<User> userRDD = ratingsGroupByUser.keys().map(id -> new User(id));
+		List<User> userList = ratingsGroupByUser.keys().map(id -> new User(id)).collect();
 
-		
+		System.out.println("End data loading.");
 		
 		
 		
 		/**
 		 * Split into training and testing sets
 		 */
+		System.out.println("Start set splitting...");
         JavaRDD<Rating>[] ratingSplits = ratingRDD.randomSplit(new double[] { 0.8, 0.2 });
         JavaRDD<Rating> trainingRatingRDD = ratingSplits[0];
         JavaRDD<Rating> testRatingRDD = ratingSplits[1];
-
+        System.out.println("End set splitting.");
         //printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
 
         /**
          *  Learning the prediction model using ALS (Alternating Least Squares)
          */
+        System.out.println("Starting ALS..."); // 13:43:03
         ALS als = new ALS();
         MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
-
+        System.out.println("ALS initialized.");
+        
         JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
-        JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD);
+        JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD).cache();
+        
+        JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults = alsResults.mapToPair(rating -> {
+        	Tuple2<Integer,Map<Integer,Double>> result = new Tuple2<Integer,Map<Integer,Double>>(rating.user(),new HashMap<Integer,Double>());
+        	result._2.put(rating.product(),rating.rating());
+        	return result;
+        }).reduceByKey((map1,map2) -> {
+        	map1.putAll(map2);
+        	return map1;
+        });
         
         Scanner scanner = new Scanner(System.in);
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
+        	scanner.nextLine();
         	
         	/**
         	 * Load the current user
         	 */
-        	JavaRDD<Rating> currentRDD = dataFrameReader.csv(USER_PATH).javaRDD()
-        			.map(row -> new Rating(0,Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1))));
-        	
+        	Map<Integer,Double> currentRating = dataFrameReader.csv(USER_PATH).javaRDD()
+        			.mapToPair(row -> new Tuple2<Integer,Double>(Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1)))).collectAsMap();
         	List<Integer> currentMovies = dataFrameReader.csv(USER_PATH).javaRDD()
         			.map(row -> Integer.parseInt(row.getAs(0))).collect();
         	
         	/**
+        	 * Affect weight for each user
+        	 */
+        	Map<Integer,Double> userWeight = new HashMap<Integer,Double>();
+        	for(User u : userList) {
+        		userWeight.put(u.getUserId(), 1.0);
+        	}
+        	
+        	/**
         	 * Calculate betweenness from each user and the current user
         	 */
-        	JavaRDD<Rating> onlyUsefullRating = alsResults.filter(rating -> currentMovies.contains(rating.product()));
-        	printRatingJavaRDDFirstContent(onlyUsefullRating,10);
-        	//JavaRDD<Rating> onlyOneUserRating = onlyUsefullRating.filter( rating -> rating.user() == 1);
-        	//System.out.println(Distance.EuclidienDistance(currentRDD.collect(), onlyOneUserRating.collect()));
+        	JavaPairRDD<Integer,Map<Integer,Double>> filterAlsPairResults = alsPairResults.filter( tuple -> {
+        		for(Integer movieId : currentMovies) {
+        			if(!tuple._2.containsKey(movieId)) {
+        				return false;
+        			}
+        		}
+        		return true;
+        	});
+        	System.out.println("Start distance calcul");
+        	Distance.EuclidienDistance(currentRating, filterAlsPairResults.collectAsMap(), userWeight);
         	
-        	
+        	System.out.println("End turn");
         	/**
         	 * Get the X first closest user
         	 */
