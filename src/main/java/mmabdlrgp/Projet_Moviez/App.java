@@ -19,7 +19,8 @@ import org.apache.spark.sql.SparkSession.Builder;
 
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
-import mmabdlrgp.Projet_Moviez.model.distance.Distance;
+import mmabdlrgp.Projet_Moviez.model.distance.DistanceManager;
+import mmabdlrgp.Projet_Moviez.model.distance.EuclidianDistance;
 import scala.Tuple2;
 
 /**
@@ -149,7 +150,7 @@ public class App
         		return true;
         	});
         	System.out.println("Start distance calcul");
-        	Distance.EuclidienDistance(currentRating, filterAlsPairResults.collectAsMap(), userWeight);
+        	DistanceManager.distance(currentRating, filterAlsPairResults.collectAsMap(), userWeight);
         	
         	System.out.println("End turn");
         	/**
