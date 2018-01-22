@@ -41,6 +41,10 @@ public class App
 	private static SparkSession spark;
 	private static SQLContext sqlContext;
 	
+	private static Map<Integer, Double> currentUserNotation;
+	private static List<Integer> currentMovies;
+	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults;
+	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
 	 * @param row
@@ -51,9 +55,8 @@ public class App
 		return Integer.parseInt(row.getString(index));
 	}
 	
-    public static void main( String[] args )
-    {
-    	
+	public static void initialize() {
+		System.out.println("Starting initalization");
 		/**
 		 * Create SQL contex
 		 */
@@ -108,7 +111,7 @@ public class App
         JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
         JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD).cache();
         
-        JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults = alsResults.mapToPair(rating -> {
+         alsPairResults = alsResults.mapToPair(rating -> {
         	Tuple2<Integer,Map<Integer,Double>> result = new Tuple2<Integer,Map<Integer,Double>>(rating.user(),new HashMap<Integer,Double>());
         	result._2.put(rating.product(),rating.rating());
         	return result;
@@ -116,19 +119,30 @@ public class App
         	map1.putAll(map2);
         	return map1;
         });
+         
+         /**
+          * Load the current user
+          */
+         
+        currentUserNotation = dataFrameReader.csv(USER_PATH).javaRDD()
+     			.mapToPair(row -> new Tuple2<Integer,Double>(Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1)))).collectAsMap();
+     	currentMovies = dataFrameReader.csv(USER_PATH).javaRDD()
+     			.map(row -> Integer.parseInt(row.getAs(0))).collect();
+         
+        System.out.println("End of initialisation");
+	}
+	
+	
+    public static void main( String[] args )
+    {
+    	initialize();
         
         Scanner scanner = new Scanner(System.in);
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
         	scanner.nextLine();
         	
-        	/**
-        	 * Load the current user
-        	 */
-        	Map<Integer,Double> currentRating = dataFrameReader.csv(USER_PATH).javaRDD()
-        			.mapToPair(row -> new Tuple2<Integer,Double>(Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1)))).collectAsMap();
-        	List<Integer> currentMovies = dataFrameReader.csv(USER_PATH).javaRDD()
-        			.map(row -> Integer.parseInt(row.getAs(0))).collect();
+        	
         	
         	/**
         	 * Affect weight for each user
@@ -150,7 +164,7 @@ public class App
         		return true;
         	});
         	System.out.println("Start distance calcul");
-        	DistanceManager.distance(currentRating, filterAlsPairResults.collectAsMap(), userWeight);
+        	DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
         	
         	System.out.println("End turn");
         	/**
@@ -164,18 +178,6 @@ public class App
         	
         	
         }
-        
-        //JavaPairRDD<UserProductTuple, Double> predictionsKeyedByUserProductRDD = predictionsForTestRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
-        
-        
-        //JavaPairRDD<UserProductTuple, Double> testKeyedByUserProductRDD = testRatingRDD.mapToPair(rating -> new Tuple2<UserProductTuple, Double>(new UserProductTuple(rating.user(), rating.product()),rating.rating()));
-        
-        //JavaPairRDD<UserProductTuple, Tuple2<Double,Double>> testAndPredictionsJoinedRDD  = testKeyedByUserProductRDD.join(predictionsKeyedByUserProductRDD);
-        
-        //testAndPredictionsJoinedRDD.take(10).forEach(k ->{
-        //    System.out.println("UserID : " + k._1.getUserId() + "||ProductId: " + k._1.getProductId() + "|| Test Rating : " + k._2._1 + "|| Predicted Rating : " + k._2._2);
-        //});
-        
     }
     
     /**
