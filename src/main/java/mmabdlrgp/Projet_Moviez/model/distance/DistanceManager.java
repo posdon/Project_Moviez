@@ -32,8 +32,6 @@ public class DistanceManager {
 			weightlessBetweeness.put(userId, currDistance.distance(currentRating, otherRatings.get(userId)));
 		}
 		return applyWeight(weightlessBetweeness, userWeight);
-		
-		//return currDistance.Distance(currentRating, otherRatings, userWeight);
 	}
 	
 	private static Map<Integer, Double> applyWeight(Map<Integer, Double> weightlessBetweeness,

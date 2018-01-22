@@ -41,9 +41,11 @@ public class App
 	private static SparkSession spark;
 	private static SQLContext sqlContext;
 	
-	private static Map<Integer, Double> currentUserNotation;
-	private static List<Integer> currentMovies;
-	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults;
+	
+	
+	private static Map<Integer, Double> currentUserNotation; // Vecteur des notes de l'utilisateur
+	private static List<User> userList; // List of all the users
+	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
@@ -53,6 +55,40 @@ public class App
 	 */
 	public static int getInt(Row row, int index) {
 		return Integer.parseInt(row.getString(index));
+	}
+	
+	public static void launchRecommandation() {
+		/**
+    	 * Affect weight for each user
+    	 */
+    	Map<Integer,Double> userWeight = new HashMap<Integer,Double>();
+    	for(User u : userList) {
+    		userWeight.put(u.getUserId(), 1.0);
+    	}
+    	
+    	/**
+    	 * Calculate betweenness from each user and the current user
+    	 */
+    	JavaPairRDD<Integer,Map<Integer,Double>> filterAlsPairResults = alsPairResults.filter( tuple -> {
+    		for(Integer movieId : currentUserNotation.keySet()) {
+    			if(!tuple._2.containsKey(movieId)) {
+    				return false;
+    			}
+    		}
+    		return true;
+    	});
+    	System.out.println("Start distance calcul");
+    	DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
+    	
+    	System.out.println("End turn");
+    	/**
+    	 * Get the X first closest user
+    	 */
+    	
+    	
+    	/**
+    	 * 
+    	 */
 	}
 	
 	public static void initialize() {
@@ -84,7 +120,7 @@ public class App
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
 		
 		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
-		List<User> userList = ratingsGroupByUser.keys().map(id -> new User(id)).collect();
+		userList = ratingsGroupByUser.keys().map(id -> new User(id)).collect();
 
 		System.out.println("End data loading.");
 		
@@ -126,8 +162,6 @@ public class App
          
         currentUserNotation = dataFrameReader.csv(USER_PATH).javaRDD()
      			.mapToPair(row -> new Tuple2<Integer,Double>(Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1)))).collectAsMap();
-     	currentMovies = dataFrameReader.csv(USER_PATH).javaRDD()
-     			.map(row -> Integer.parseInt(row.getAs(0))).collect();
          
         System.out.println("End of initialisation");
 	}
@@ -141,44 +175,38 @@ public class App
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
         	scanner.nextLine();
-        	
-        	
-        	
-        	/**
-        	 * Affect weight for each user
-        	 */
-        	Map<Integer,Double> userWeight = new HashMap<Integer,Double>();
-        	for(User u : userList) {
-        		userWeight.put(u.getUserId(), 1.0);
-        	}
-        	
-        	/**
-        	 * Calculate betweenness from each user and the current user
-        	 */
-        	JavaPairRDD<Integer,Map<Integer,Double>> filterAlsPairResults = alsPairResults.filter( tuple -> {
-        		for(Integer movieId : currentMovies) {
-        			if(!tuple._2.containsKey(movieId)) {
-        				return false;
-        			}
-        		}
-        		return true;
-        	});
-        	System.out.println("Start distance calcul");
-        	DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
-        	
-        	System.out.println("End turn");
-        	/**
-        	 * Get the X first closest user
-        	 */
-        	
-        	
-        	/**
-        	 * 
-        	 */
-        	
-        	
+        	launchRecommandation();
         }
     }
+    
+    
+    
+    public static Map<Integer, Double> getCurrentUserVector(){
+    	return currentUserNotation;
+    }
+    
+    public static void addOrModifyUserNotation(Integer movieId, Double note) {
+    	if(note >= 0.0 || note <= 5.0) {
+    		currentUserNotation.put(movieId,note);
+    	}else {
+    		System.out.println("Error :: Note isn't in the good format");
+    	}
+    }
+    
+    public static Double suppressUserNotation(Integer movieId) {
+    	return currentUserNotation.remove(movieId);
+    }
+    
+    public static void setDistance(String distanceName) {
+    	DistanceManager.setDistance(distanceName);
+    }
+    
+    
+    /*
+     * 
+     * Print functions below
+     * 
+     */
     
     /**
      * Print the nb first ratings
