@@ -1,4 +1,4 @@
-package mmabdlrgp.Projet_Moviez;
+package mmabdlrgp.Projet_Moviez.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,9 +17,6 @@ import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
-import mmabdlrgp.Projet_Moviez.model.MapExtractor;
-import mmabdlrgp.Projet_Moviez.model.Movie;
-import mmabdlrgp.Projet_Moviez.model.User;
 import mmabdlrgp.Projet_Moviez.model.distance.DistanceManager;
 import scala.Tuple2;
 
@@ -27,7 +24,7 @@ import scala.Tuple2;
  * Hello world!
  *
  */
-public class App 
+public class RecommandationModel 
 {
 
 	private final static String RATING_PATH = "./ratings.csv";
@@ -208,31 +205,7 @@ public class App
      			.mapToPair(row -> new Tuple2<Integer,Double>(Integer.parseInt(row.getAs(0)),Double.parseDouble(row.getAs(1)))).collectAsMap();
          
         System.out.println("End of initialisation");
-	}
-	
-	
-    public static void main( String[] args )
-    {
-    	initialize();
-        
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Waiting your order chief !");
-        while(scanner.hasNextLine()) {
-        	String currLine = scanner.nextLine();
-        	if(currLine.startsWith("work")) {
-        		Map<Integer,Double> recommandation = launchRecommandation();
-	        	for(Integer movieId : recommandation.keySet()) {
-	        		System.out.println(movieId+" "+recommandation.get(movieId));
-	        	}
-	        }else if(currLine.startsWith("set user")) {
-	        	setNbClosestUser(Integer.parseInt(scanner.nextLine()));
-        	}else if(currLine.startsWith("set movie")) {
-	        	setNbRecommandation(Integer.parseInt(scanner.nextLine()));
-        	}
-        }
-    }
-    
-    
+	}    
     
     public static Map<Integer, Double> getCurrentUserVector(){
     	return currentUserNotation;
