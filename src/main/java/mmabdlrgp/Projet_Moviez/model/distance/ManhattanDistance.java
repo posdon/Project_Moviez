@@ -6,7 +6,10 @@ public class ManhattanDistance implements Distance {
 
 	@Override
 	public Double distance(Map<Integer, Double> currentRating, Map<Integer, Double> otherRatings) {
-		// TODO Auto-generated method stub
+		Double result = 0.0;
+		for(Integer movieId : currentRating.keySet()) {
+			result += Math.abs(currentRating.get(movieId)-otherRatings.get(movieId));
+		}
 		return null;
 	}
 
