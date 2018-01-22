@@ -50,6 +50,7 @@ public class App
 	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
 	private static int NB_CLOSEST_USER = 5;
+	private static int NB_RECOMMANDATION_RESULT = 5;
 	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
@@ -61,7 +62,7 @@ public class App
 		return Integer.parseInt(row.getString(index));
 	}
 	
-	public static void launchRecommandation() {
+	public static Map<Integer,Double> launchRecommandation() {
 		/**
     	 * Affect weight for each user
     	 */
@@ -120,7 +121,14 @@ public class App
     	/** 
     	 * Get the X first closest movies
     	 */
-    	
+    	extractor.setMap(currHypoteticalMovieNotation);
+    	extractor.setNbResult(NB_RECOMMANDATION_RESULT);
+    	List<Tuple2<Integer,Double>> recommandateMovie = extractor.getXFirstResults();
+    	Map<Integer,Double> result = new HashMap<Integer,Double>();
+    	for(Tuple2<Integer,Double> tuple : recommandateMovie) {
+    		result.put(tuple._1, tuple._2);
+    	}
+    	return result;
 	}
 	
 	public static void initialize() {
@@ -207,7 +215,10 @@ public class App
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
         	scanner.nextLine();
-        	launchRecommandation();
+        	Map<Integer,Double> recommandation = launchRecommandation();
+        	for(Integer movieId : recommandation.keySet()) {
+        		System.out.println(movieId+" "+recommandation.get(movieId));
+        	}
         }
     }
     
