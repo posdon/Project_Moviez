@@ -31,14 +31,19 @@ public class DistanceManager {
 		for(Integer userId : otherRatings.keySet()) {
 			weightlessBetweeness.put(userId, currDistance.distance(currentRating, otherRatings.get(userId)));
 		}
-		return applyWeight(weightlessBetweeness, userWeight);
+		return applyWeightAndConvertToBetweeness(weightlessBetweeness, userWeight);
 	}
 	
-	private static Map<Integer, Double> applyWeight(Map<Integer, Double> weightlessBetweeness,
+	private static Map<Integer, Double> applyWeightAndConvertToBetweeness(Map<Integer, Double> weightlessBetweeness,
 			Map<Integer, Double> userWeight) {
 		Map<Integer, Double> result = new HashMap<Integer,Double>();
 		for(Integer userId : weightlessBetweeness.keySet()) {
-			result.put(userId, userWeight.get(userId));
+			if(weightlessBetweeness.get(userId) == 0) {
+				// Value max
+				result.put(userId, 1.0);
+			}else {
+				result.put(userId, userWeight.get(userId)/weightlessBetweeness.get(userId));				
+			}
 		}
 		return result;
 	}

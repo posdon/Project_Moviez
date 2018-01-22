@@ -11,25 +11,25 @@ public class MapExtractor {
 
 public final static MapExtractor INSTANCE = new MapExtractor();
 	
-	private static Map<Integer,Double> map;
-	private static int nbResult;
-	private static Tuple2<Integer,Double>[] resultTab;
+	private Map<Integer,Double> map;
+	private int nbResult;
+	private Tuple2<Integer,Double>[] resultTab;
 	
 	private MapExtractor() {
 		map = new HashMap<Integer,Double>();
 		nbResult=0;
 	}
 	
-	public static void setNbResult(int i) {
+	public void setNbResult(int i) {
 		if(i >= 0)
 		nbResult = i;
 	}
 	
-	public static void setMap(Map<Integer,Double> mapGiven) {
+	public void setMap(Map<Integer,Double> mapGiven) {
 		map = mapGiven;
 	}
 	
-	public static List<Tuple2<Integer,Double>> getXFirstResults(){
+	public List<Tuple2<Integer,Double>> getXFirstResults(){
 		resultTab = new Tuple2[nbResult];
 		for(int i=0; i<nbResult; i++) {
 			resultTab[i] = new Tuple2<Integer,Double>(1,0.0);

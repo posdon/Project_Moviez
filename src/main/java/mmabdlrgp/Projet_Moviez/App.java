@@ -17,6 +17,7 @@ import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
+import mmabdlrgp.Projet_Moviez.model.MapExtractor;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
 import mmabdlrgp.Projet_Moviez.model.distance.DistanceManager;
@@ -45,6 +46,8 @@ public class App
 	private static Map<Integer, Double> currentUserNotation; // Vecteur des notes de l'utilisateur
 	private static List<User> userList; // List of all the users
 	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
+	
+	private static int NB_CLOSEST_USER = 5;
 	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
@@ -84,7 +87,9 @@ public class App
     	/**
     	 * Get the X first closest user
     	 */
-    	
+    	MapExtractor extractor = MapExtractor.INSTANCE;
+    	extractor.setMap(betweenessVector);
+    	extractor.setNbResult(NB_CLOSEST_USER);
     	
     	/**
     	 * 
