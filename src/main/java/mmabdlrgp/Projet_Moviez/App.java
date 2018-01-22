@@ -20,7 +20,6 @@ import org.apache.spark.sql.SparkSession.Builder;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.User;
 import mmabdlrgp.Projet_Moviez.model.distance.DistanceManager;
-import mmabdlrgp.Projet_Moviez.model.distance.EuclidianDistance;
 import scala.Tuple2;
 
 /**
@@ -77,10 +76,11 @@ public class App
     		}
     		return true;
     	});
-    	System.out.println("Start distance calcul");
-    	DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
     	
+    	System.out.println("Start distance calcul");
+    	Map<Integer, Double> betweenessVector = DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
     	System.out.println("End turn");
+    	
     	/**
     	 * Get the X first closest user
     	 */
@@ -89,6 +89,7 @@ public class App
     	/**
     	 * 
     	 */
+    	
 	}
 	
 	public static void initialize() {
@@ -225,7 +226,7 @@ public class App
      * @param ratingsGroupByMovie
      * @param ratingsGroupByUser
      */
-    public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
+	public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
     	System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
 		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
 		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896

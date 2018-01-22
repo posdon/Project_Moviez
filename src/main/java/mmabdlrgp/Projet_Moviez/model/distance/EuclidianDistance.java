@@ -1,12 +1,10 @@
 package mmabdlrgp.Projet_Moviez.model.distance;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import scala.Tuple2;
 
 public class EuclidianDistance implements Distance{
 
+	@Override
 	public Double distance(Map<Integer, Double> currentRating,
 			Map<Integer, Double> otherRatings) {
 		
