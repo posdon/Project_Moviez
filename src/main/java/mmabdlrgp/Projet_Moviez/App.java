@@ -244,6 +244,16 @@ public class App
     	DistanceManager.setDistance(distanceName);
     }
     
+    public static void setNbRecommandation(int i) {
+    	if(i > 0 && i<movieList.size()) 
+    		NB_RECOMMANDATION_RESULT = i;   	
+    }
+    
+    public static void setNbClosestUser(int i) {
+    	if(i > 0 && i<userList.size())
+    		NB_CLOSEST_USER = i;
+    }
+    
     
     /*
      * 
