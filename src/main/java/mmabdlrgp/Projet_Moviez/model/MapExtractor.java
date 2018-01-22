@@ -39,8 +39,10 @@ public final static MapExtractor INSTANCE = new MapExtractor();
 		}
 		
 		for(Integer userId : map.keySet()) {
-			for(int i=0; i<nbResult; i++) {
-				if(map.get(userId) > resultTab[i]._2()) {
+			boolean verif = true;
+			for(int i=0; i<nbResult && verif; i++) {
+				if(map.get(userId) > resultTab[i]._2() && verif) {
+					verif = false;
 					insertInto(resultTab, i, new Tuple2<Integer,Double>(userId,map.get(userId)));
 				}
 			}
@@ -54,7 +56,7 @@ public final static MapExtractor INSTANCE = new MapExtractor();
 	}
 	
 	private static void insertInto(Tuple2<Integer,Double>[] tab, int index, Tuple2<Integer,Double> value) {
-		for(int i= index; i<tab.length-1; i++) {
+		for(int i= index; i<tab.length; i++) {
 			Tuple2<Integer,Double> temp = tab[i];
 			tab[i] = value;
 			value = temp;
