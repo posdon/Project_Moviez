@@ -106,19 +106,20 @@ public class App
     	 * Theorical note movies
     	 */
     	Map<Integer,Double> currHypoteticalMovieNotation = new HashMap<Integer,Double>();
-    	for(Integer i : movieList) {
-    		if(!currentUserNotation.keySet().contains(i)) {
-    			currHypoteticalMovieNotation.put(i, 0.0);
-    		}
-    	}
-    	for(User user : userList) {
-    		if(closestUserList.contains(user.getUserId())) {
-    			Map<Integer,Double> currRates = alsMap.get(user.getUserId());
-    			for(Integer movieId : currHypoteticalMovieNotation.keySet()) {
-    				Double exValue = currHypoteticalMovieNotation.get(movieId);
-    				currHypoteticalMovieNotation.put(movieId, exValue+currRates.get(movieId));
-    			}
-    		}
+    	Map<Integer,Map<Integer,Double>> filteredClosestUser = filterAlsPairResults.filter(tuple -> closestUserList.contains(tuple._1)).collectAsMap();
+    	for(Integer userId : filteredClosestUser.keySet()) {
+			Map<Integer,Double> currRates = filteredClosestUser.get(userId);
+			for(Integer movieId : currRates.keySet()) {
+				if(currentUserNotation.keySet().contains(movieId)) {
+					System.out.println("Film already noted");
+				}else {
+					if(!currHypoteticalMovieNotation.containsKey(movieId)) {
+						currHypoteticalMovieNotation.put(movieId, 0.0);
+					}
+					Double exValue = currHypoteticalMovieNotation.get(movieId);
+					currHypoteticalMovieNotation.put(movieId, exValue+currRates.get(movieId));
+				}
+			}
     	}
     	
     	/** 
@@ -217,10 +218,16 @@ public class App
         Scanner scanner = new Scanner(System.in);
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
-        	scanner.nextLine();
-        	Map<Integer,Double> recommandation = launchRecommandation();
-        	for(Integer movieId : recommandation.keySet()) {
-        		System.out.println(movieId+" "+recommandation.get(movieId));
+        	String currLine = scanner.nextLine();
+        	if(currLine.startsWith("work")) {
+        		Map<Integer,Double> recommandation = launchRecommandation();
+	        	for(Integer movieId : recommandation.keySet()) {
+	        		System.out.println(movieId+" "+recommandation.get(movieId));
+	        	}
+	        }else if(currLine.startsWith("set user")) {
+	        	setNbClosestUser(Integer.parseInt(scanner.nextLine()));
+        	}else if(currLine.startsWith("set movie")) {
+	        	setNbRecommandation(Integer.parseInt(scanner.nextLine()));
         	}
         }
     }

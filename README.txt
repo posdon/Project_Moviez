@@ -1,6 +1,24 @@
-We followed this tutorial : http://www.stepbystepcoder.com/building-a-recommendation-engine-with-apache-spark-java-part-1/
+Our application work like below :
+
+At the beginning, we load all the datas and create an ALS algorithme, trained on 80% of the rating in rating.csv. The other 20% are the set of test and create our model matrix "userId*movieId -> rating".
+The separation of the ratings is made randomly.
+
+We have a current vector for our user that contains his note for some movies. You can add some note to other movies, supress ones, or modify somes thanks to our interface.
+You can define some parameters for our algorithme which are :
+- The distance type used (euclidian, manhattan, cosinus, hellinger, jarcard ...)
+- The number of closest user used
+- The number of movie recommanded
+
+Then when you launch the recommandation process, it will calculate the given distance between each user who have a result from ALS for all the movies you watched.
+We will keep only the given number of closest user.
+Then we will compute for these users all the movie you didn't see the ALS result ponderated by the betweeness of the user.
 
 
+1923 8.823267141360922
+838 14.357467815220105
+1095 11.069481105552743
+2583 10.815142408953806
+1079 10.278814143353033
 
 Usage License
 =============
@@ -17,6 +35,7 @@ In no event shall the University of Minnesota, its affiliates or employees be li
 
 If you have any further questions or comments, please email <grouplens-info@umn.edu>
 
+At the beginning of the project, we followed this tutorial : http://www.stepbystepcoder.com/building-a-recommendation-engine-with-apache-spark-java-part-1/
 
 Citation
 ========
