@@ -9,6 +9,9 @@ import scala.Tuple2;
 
 public class MapExtractor {
 
+	/**
+	 * Will extract the nbResult higher results from the map
+	 */
 public final static MapExtractor INSTANCE = new MapExtractor();
 	
 	private Map<Integer,Double> map;

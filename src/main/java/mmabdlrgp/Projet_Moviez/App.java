@@ -1,5 +1,6 @@
 package mmabdlrgp.Projet_Moviez;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class App
 	
 	private static Map<Integer, Double> currentUserNotation; // Vecteur des notes de l'utilisateur
 	private static List<User> userList; // List of all the users
+	private static List<Integer> movieList;
 	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
 	private static int NB_CLOSEST_USER = 5;
@@ -80,8 +82,10 @@ public class App
     		return true;
     	});
     	
+    	Map<Integer, Map<Integer,Double>> alsMap = filterAlsPairResults.collectAsMap();
+    	
     	System.out.println("Start distance calcul");
-    	Map<Integer, Double> betweenessVector = DistanceManager.distance(currentUserNotation, filterAlsPairResults.collectAsMap(), userWeight);
+    	Map<Integer, Double> betweenessVector = DistanceManager.distance(currentUserNotation, alsMap, userWeight);
     	System.out.println("End turn");
     	
     	/**
@@ -90,9 +94,31 @@ public class App
     	MapExtractor extractor = MapExtractor.INSTANCE;
     	extractor.setMap(betweenessVector);
     	extractor.setNbResult(NB_CLOSEST_USER);
+    	List<Tuple2<Integer, Double>> closestUser = extractor.getXFirstResults();
+    	List<Integer> closestUserList = new ArrayList<Integer>();
+    	for(Tuple2<Integer,Double> tuple : closestUser) {
+    		closestUserList.add(tuple._1);
+    	}
     	
     	/**
-    	 * 
+    	 * Theorical note movies
+    	 */
+    	Map<Integer,Double> currHypoteticalMovieNotation = new HashMap<Integer,Double>();
+    	for(Integer i : movieList) {
+    		currHypoteticalMovieNotation.put(i, 0.0);
+    	}
+    	for(User user : userList) {
+    		if(closestUserList.contains(user.getUserId())) {
+    			Map<Integer,Double> currRates = alsMap.get(user.getUserId());
+    			for(Integer movieId : currRates.keySet()) {
+    				Double exValue = currHypoteticalMovieNotation.get(movieId);
+    				currHypoteticalMovieNotation.put(movieId, exValue+currRates.get(movieId));
+    			}
+    		}
+    	}
+    	
+    	/** 
+    	 * Get the X first closest movies
     	 */
     	
 	}
@@ -100,7 +126,7 @@ public class App
 	public static void initialize() {
 		System.out.println("Starting initalization");
 		/**
-		 * Create SQL contex
+		 * Create SQL context
 		 */
 		spark = new Builder()
 			     .appName("Reommendation Engine")
@@ -117,8 +143,8 @@ public class App
 		 * Load datas
 		 */
 		System.out.println("Start data loading...");
-		//JavaRDD<Movie> movieRDD = dataFrameReader.csv(MOVIE_PATH).javaRDD()
-		//		.map(row -> new Movie(Integer.parseInt(row.getAs(0)),row.getAs(1),row.getAs(2))).cache();
+		movieList = dataFrameReader.csv(MOVIE_PATH).javaRDD()
+				.map(row -> Integer.parseInt(row.getAs(0))).collect();
 		
 		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
