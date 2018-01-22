@@ -23,6 +23,7 @@ public class DistanceManager {
 				break;
 			case "cosinus":
 				currDistance = new CosinusDistance();
+				break;
 			default:
 				currDistance = new EuclidianDistance();
 				break;
@@ -47,6 +48,7 @@ public class DistanceManager {
 				// Value max
 				result.put(userId, 1.0);
 			}else {
+				System.out.println("Should be 1 :: "+userWeight.get(userId)+" "+weightlessBetweeness.get(userId));
 				result.put(userId, userWeight.get(userId)/weightlessBetweeness.get(userId));				
 			}
 		}

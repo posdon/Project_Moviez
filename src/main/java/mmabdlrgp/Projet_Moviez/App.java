@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
-
+import java.util.Scanner;import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.mllib.recommendation.ALS;
@@ -99,19 +98,23 @@ public class App
     	List<Integer> closestUserList = new ArrayList<Integer>();
     	for(Tuple2<Integer,Double> tuple : closestUser) {
     		closestUserList.add(tuple._1);
+    		System.out.println(tuple._1+" "+tuple._2);
     	}
+    	
     	
     	/**
     	 * Theorical note movies
     	 */
     	Map<Integer,Double> currHypoteticalMovieNotation = new HashMap<Integer,Double>();
     	for(Integer i : movieList) {
-    		currHypoteticalMovieNotation.put(i, 0.0);
+    		if(!currentUserNotation.keySet().contains(i)) {
+    			currHypoteticalMovieNotation.put(i, 0.0);
+    		}
     	}
     	for(User user : userList) {
     		if(closestUserList.contains(user.getUserId())) {
     			Map<Integer,Double> currRates = alsMap.get(user.getUserId());
-    			for(Integer movieId : currRates.keySet()) {
+    			for(Integer movieId : currHypoteticalMovieNotation.keySet()) {
     				Double exValue = currHypoteticalMovieNotation.get(movieId);
     				currHypoteticalMovieNotation.put(movieId, exValue+currRates.get(movieId));
     			}

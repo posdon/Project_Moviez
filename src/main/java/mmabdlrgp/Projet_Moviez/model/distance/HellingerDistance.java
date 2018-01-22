@@ -2,16 +2,17 @@ package mmabdlrgp.Projet_Moviez.model.distance;
 
 import java.util.Map;
 
-public class EuclidianDistance implements Distance{
+public class HellingerDistance implements Distance {
 
 	@Override
 	public Double distance(Map<Integer, Double> currentRating,
 			Map<Integer, Double> otherRatings) {
-		
-		Double distance = 0.0;
+		Double result = 0.0;
 		for(Integer movieId : currentRating.keySet()) {
-			distance += Math.pow(currentRating.get(movieId)-otherRatings.get(movieId), 2);
+			result += Math.abs(currentRating.get(movieId)-otherRatings.get(movieId));
 		}
-		return distance;
+		//TODO 
+		return null;
 	}
+
 }
