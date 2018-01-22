@@ -11,7 +11,7 @@ public class ManhattanDistance implements Distance {
 		for(Integer movieId : currentRating.keySet()) {
 			result += Math.abs(currentRating.get(movieId)-otherRatings.get(movieId));
 		}
-		return null;
+		return result;
 	}
 
 }

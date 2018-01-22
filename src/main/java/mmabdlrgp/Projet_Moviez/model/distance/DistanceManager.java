@@ -18,6 +18,9 @@ public class DistanceManager {
 			case "euclidian":
 				currDistance = new EuclidianDistance();
 				break;
+			case "manhattan":
+				currDistance = new ManhattanDistance();
+				break;
 			default:
 				currDistance = new EuclidianDistance();
 				break;
