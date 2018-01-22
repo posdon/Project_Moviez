@@ -21,6 +21,8 @@ public class DistanceManager {
 			case "manhattan":
 				currDistance = new ManhattanDistance();
 				break;
+			case "cosinus":
+				currDistance = new CosinusDistance();
 			default:
 				currDistance = new EuclidianDistance();
 				break;
