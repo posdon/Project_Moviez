@@ -15,20 +15,22 @@ public class MovieMoreInfoController {
 	private Label ratingLabel;
 
     private Stage dialogStage;
+    private RecommandationModel model;
 
     @FXML
     private void initialize() {
     }
 
-    public void setDialogStage(Stage dialogStage) {
+    public void setDialogStage(Stage dialogStage, RecommandationModel model) {
         this.dialogStage = dialogStage;
+        this.model = model;
     }
 
     public void setMovie(Movie movie) {
         titleLabel.setText(movie.getTitle().getValue().toString());
         genresLabel.setText(movie.getGenres().getValue().toString());
-        if(RecommandationModel.getCurrentUserVector().keySet().contains(movie.getMovieId())) {
-        	ratingLabel.setText(RecommandationModel.getCurrentUserVector().get(movie.getMovieId()).toString());        	
+        if(model.getCurrentUserVector().keySet().contains(movie.getMovieId().intValue())) {
+        	ratingLabel.setText(model.getCurrentUserVector().get(movie.getMovieId().intValue()).toString());        	
         }else {
         	ratingLabel.setText("-Not rated-");
         }

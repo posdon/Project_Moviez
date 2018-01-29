@@ -30,6 +30,8 @@ public class Main extends Application {
 
 	private ObservableList<Movie> movieData = FXCollections.observableArrayList();
 	
+	private RecommandationModel model = new RecommandationModel();
+	
 	public Main() throws NumberFormatException, IOException {
 		String path = "./movies.csv";
 		BufferedReader file = new BufferedReader(new FileReader(path));
@@ -110,7 +112,7 @@ public class Main extends Application {
 			Scene scene = new Scene(page);
 			dialogStage.setScene(scene);
 			MovieMoreInfoController controller = loader.getController();
-			controller.setDialogStage(dialogStage);
+			controller.setDialogStage(dialogStage, model);
 			controller.setMovie(movie);
 			dialogStage.showAndWait();
 		} catch (IOException e) {
@@ -130,7 +132,7 @@ public class Main extends Application {
 			Scene scene = new Scene(page);
 			dialogStage.setScene(scene);
 			MovieRateController controller = loader.getController();
-			controller.setDialogStage(dialogStage);
+			controller.setDialogStage(dialogStage, model);
 			controller.setMovie(movie);
 			dialogStage.showAndWait();
 			return controller.isOkClicked();

@@ -29,24 +29,21 @@ public class RecommandationModel
 
 	private final static String RATING_PATH = "./ratings.csv";
 	private final static String MOVIE_PATH = "./movies.csv";
-	private final static String LINK_PATH = "./links.csv";
 	private final static String USER_PATH = "./user.csv";
-	private final static String TAG_PATH = "./tags.csv";
-	private final static String GENOME_SCORE_PATH = "./genome-scores.csv";
-	private final static String GENOME_TAG_PATH = "./genome-tags.csv";
 	
 	private static SparkSession spark;
-	private static SQLContext sqlContext;
 	
 	
 	
-	private static Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
-	private static List<User> userList = new ArrayList<User>(); // List of all the users
-	private static List<Integer> movieList = new ArrayList<Integer>();
-	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
+	private Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
+	private List<User> userList = new ArrayList<User>(); // List of all the users
+	private List<Integer> movieList = new ArrayList<Integer>();
+	private JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
 	private static int NB_CLOSEST_USER = 5;
 	private static int NB_RECOMMANDATION_RESULT = 5;
+	
+	
 	
 	/**
 	 * Retourne l'entier de la ligne row à l'indice index
@@ -54,11 +51,11 @@ public class RecommandationModel
 	 * @param index
 	 * @return
 	 */
-	public static int getInt(Row row, int index) {
+	public int getInt(Row row, int index) {
 		return Integer.parseInt(row.getString(index));
 	}
 	
-	public static Map<Integer,Double> launchRecommandation() {
+	public Map<Integer,Double> launchRecommandation() {
 		/**
     	 * Affect weight for each user
     	 */
@@ -132,7 +129,7 @@ public class RecommandationModel
     	return result;
 	}
 	
-	public static void initialize() {
+	public void initialize() {
 		System.out.println("Starting initalization");
 		/**
 		 * Create SQL context
@@ -142,7 +139,6 @@ public class RecommandationModel
 			     .master("local")
 			     .getOrCreate();		
 		
-		sqlContext = spark.sqlContext();
 		
 		final DataFrameReader dataFrameReader = spark.read();
 		dataFrameReader.option("header", "true");
@@ -207,11 +203,11 @@ public class RecommandationModel
         System.out.println("End of initialisation");
 	}    
     
-    public static Map<Integer, Double> getCurrentUserVector(){
+    public Map<Integer, Double> getCurrentUserVector(){
     	return currentUserNotation;
     }
     
-    public static void addOrModifyUserNotation(Integer movieId, Double note) {
+    public void addOrModifyUserNotation(Integer movieId, Double note) {
     	if(note >= 0.0 || note <= 5.0) {
     		currentUserNotation.put(movieId,note);
     	}else {
@@ -219,20 +215,20 @@ public class RecommandationModel
     	}
     }
     
-    public static Double suppressUserNotation(Integer movieId) {
+    public Double suppressUserNotation(Integer movieId) {
     	return currentUserNotation.remove(movieId);
     }
     
-    public static void setDistance(String distanceName) {
+    public void setDistance(String distanceName) {
     	DistanceManager.setDistance(distanceName);
     }
     
-    public static void setNbRecommandation(int i) {
+    public void setNbRecommandation(int i) {
     	if(i > 0 && i<movieList.size()) 
     		NB_RECOMMANDATION_RESULT = i;   	
     }
     
-    public static void setNbClosestUser(int i) {
+    public void setNbClosestUser(int i) {
     	if(i > 0 && i<userList.size())
     		NB_CLOSEST_USER = i;
     }
@@ -244,82 +240,82 @@ public class RecommandationModel
      * 
      */
     
-    /**
-     * Print the nb first ratings
-     * @param javaRDD
-     * @param nb
-     */
-    public static void printRatingJavaRDDFirstContent(JavaRDD<Rating> javaRDD, Integer nb) {
-    	javaRDD.take(nb).forEach(k -> System.out.println("UserID : " + k.user() + "||ProductId: " + k.product() + "|| Test Rating : " + k.rating()));
-    }
-    
-    /**
-     * Print some results for analyse Loaded data.
-     * @param movieRDD
-     * @param ratingRDD
-     * @param userRDD
-     * @param ratingsGroupByMovie
-     * @param ratingsGroupByUser
-     */
-	public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
-    	System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
-		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
-		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
-		System.out.println("Total number of movies rated   : " + ratingsGroupByMovie.count()); // Value = 45115
-		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
-    }
-
-    public static void printExamplePostUserDF(Dataset<Row> usersDF) {
-    	System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
-		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
-		
-		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
-		
-		for(Row row : filteredUsers){
-			System.out.println("UserId : " + row.getAs("userId"));
-		}
-    }
-    
-    public static void printExamplePostRatingDF(Dataset<Row> ratingDF) {
-    	
-		System.out.println("Number of rows : (user = 1 and movie = 110 ) : " + ratingDF.count());
-		
-		List<Row> filteredDF = ratingDF.collectAsList();
-		
-		for(Row row : filteredDF){
-			System.out.print("UserId : " + row.getAs("user"));
-			System.out.print("	MovieId : " + row.getAs("product"));
-			System.out.println("	Rating : " + row.getAs("rating"));
-		}
-    }
-    
-    public static void printExamplePostMovieDF(Dataset<Row> movieDF) {
-    	System.out.println("Total Number of movies df : " + movieDF.count());
-		
-		Dataset<Row> filteredMoviesDF = sqlContext.sql("select * from movies where movies.movieId in (19,4000)");
-		
-		List<Row> filteredMovies  = filteredMoviesDF.collectAsList();
-		
-		for(Row row : filteredMovies){
-			System.out.print("MovieId : " + row.getAs("movieId"));
-			System.out.print("	Title : " + row.getAs("title"));
-			System.out.println("	Genres : " + row.getAs("genres"));
-		}
-    }
-
-    public static void printBestRecommandationForUser(MatrixFactorizationModel model, int userId, int nbRecommandation) {
-    	Rating[] recommendedsFor = model.recommendProducts(userId, nbRecommandation);
-        System.out.println("Recommendations for "+userId);
-        for (Rating ratings : recommendedsFor) {
-            System.out.println("MovieId : " + ratings.product() + "-- Rating : " + ratings.rating());
-        }
-    }
-
-    public static void printExamplePostSplittingSet(JavaRDD<Rating> trainingRatingRDD, JavaRDD<Rating> testRatingRDD) {
-    	long numOfTrainingRating = trainingRatingRDD.count();
-        long numOfTestingRating = testRatingRDD.count();
-
-        System.out.println("Number of training Rating : " + numOfTrainingRating);
-        System.out.println("Number of training Testing : " + numOfTestingRating);
-    }
+//    /**
+//     * Print the nb first ratings
+//     * @param javaRDD
+//     * @param nb
+//     */
+//    public static void printRatingJavaRDDFirstContent(JavaRDD<Rating> javaRDD, Integer nb) {
+//    	javaRDD.take(nb).forEach(k -> System.out.println("UserID : " + k.user() + "||ProductId: " + k.product() + "|| Test Rating : " + k.rating()));
+//    }
+//    
+//    /**
+//     * Print some results for analyse Loaded data.
+//     * @param movieRDD
+//     * @param ratingRDD
+//     * @param userRDD
+//     * @param ratingsGroupByMovie
+//     * @param ratingsGroupByUser
+//     */
+//	public static void printExampleLoadedData(JavaRDD<Movie> movieRDD, JavaRDD<Rating> ratingRDD, JavaRDD<User> userRDD, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByMovie, JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser) {
+//    	System.out.println("Total number of movies : "+movieRDD.count()); // Value = 45843
+//		System.out.println("Total number of ratings  : " + ratingRDD.count()); // Value = 26024289
+//		System.out.println("Total number of user  : " + userRDD.count()); // Value = 270896
+//		System.out.println("Total number of movies rated   : " + ratingsGroupByMovie.count()); // Value = 45115
+//		System.out.println("Total number of users who rated movies   : " + ratingsGroupByUser.count()); // Value = 270896
+//    }
+//
+//    public static void printExamplePostUserDF(Dataset<Row> usersDF) {
+//    	System.out.println("Total Number of users df : " + usersDF.count()); // Value = 270896
+//		Dataset<Row> filteredUsersDF = sqlContext.sql("select * from users where users.userId in (11,12)");
+//		
+//		List<Row> filteredUsers  = filteredUsersDF.collectAsList();
+//		
+//		for(Row row : filteredUsers){
+//			System.out.println("UserId : " + row.getAs("userId"));
+//		}
+//    }
+//    
+//    public static void printExamplePostRatingDF(Dataset<Row> ratingDF) {
+//    	
+//		System.out.println("Number of rows : (user = 1 and movie = 110 ) : " + ratingDF.count());
+//		
+//		List<Row> filteredDF = ratingDF.collectAsList();
+//		
+//		for(Row row : filteredDF){
+//			System.out.print("UserId : " + row.getAs("user"));
+//			System.out.print("	MovieId : " + row.getAs("product"));
+//			System.out.println("	Rating : " + row.getAs("rating"));
+//		}
+//    }
+//    
+//    public static void printExamplePostMovieDF(Dataset<Row> movieDF) {
+//    	System.out.println("Total Number of movies df : " + movieDF.count());
+//		
+//		Dataset<Row> filteredMoviesDF = sqlContext.sql("select * from movies where movies.movieId in (19,4000)");
+//		
+//		List<Row> filteredMovies  = filteredMoviesDF.collectAsList();
+//		
+//		for(Row row : filteredMovies){
+//			System.out.print("MovieId : " + row.getAs("movieId"));
+//			System.out.print("	Title : " + row.getAs("title"));
+//			System.out.println("	Genres : " + row.getAs("genres"));
+//		}
+//    }
+//
+//    public static void printBestRecommandationForUser(MatrixFactorizationModel model, int userId, int nbRecommandation) {
+//    	Rating[] recommendedsFor = model.recommendProducts(userId, nbRecommandation);
+//        System.out.println("Recommendations for "+userId);
+//        for (Rating ratings : recommendedsFor) {
+//            System.out.println("MovieId : " + ratings.product() + "-- Rating : " + ratings.rating());
+//        }
+//    }
+//
+//    public static void printExamplePostSplittingSet(JavaRDD<Rating> trainingRatingRDD, JavaRDD<Rating> testRatingRDD) {
+//    	long numOfTrainingRating = trainingRatingRDD.count();
+//        long numOfTestingRating = testRatingRDD.count();
+//
+//        System.out.println("Number of training Rating : " + numOfTrainingRating);
+//        System.out.println("Number of training Testing : " + numOfTestingRating);
+//    }
 }

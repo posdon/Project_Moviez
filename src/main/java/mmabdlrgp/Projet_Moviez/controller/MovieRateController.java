@@ -6,6 +6,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import mmabdlrgp.Projet_Moviez.model.Movie;
+import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
 
 public class MovieRateController {
 
@@ -15,18 +16,24 @@ public class MovieRateController {
 	private Stage dialogStage;
 	private Movie movie;
 	private boolean okClicked = false;
-
+	private RecommandationModel model;
+	
 	@FXML
 	private void initialize() {
 	}
 
-	public void setDialogStage(Stage dialogStage) {
+	public void setDialogStage(Stage dialogStage, RecommandationModel model) {
 		this.dialogStage = dialogStage;
+		this.model = model;
 	}
 
 	public void setMovie(Movie movie) {
 		this.movie = movie;
-		ratingField.setText(movie.getMovieId().getValue().toString());
+		if(model.getCurrentUserVector().keySet().contains(movie.getMovieId().intValue())) {
+			ratingField.setText(model.getCurrentUserVector().get(movie.getMovieId().intValue()).toString());        	
+        }else {
+        	ratingField.setText("-Not rated-");
+        }
 	}
 
 	public boolean isOkClicked() {
@@ -36,8 +43,7 @@ public class MovieRateController {
 	@FXML
 	private void handleOk() {
 		if (isInputValid()) {
-			movie.setMovieId(Integer.parseInt(ratingField.getText()));
-
+			model.addOrModifyUserNotation(movie.getMovieId().intValue(), Double.parseDouble(ratingField.getText()));
 			okClicked = true;
 			dialogStage.close();
 		}
@@ -59,11 +65,11 @@ public class MovieRateController {
 
 		} else {
 			try {
-				Integer.parseInt(ratingField.getText());
+				Double.parseDouble(ratingField.getText());
 			} catch (NumberFormatException e) {
 				errorMsg += "Rating not valid (must be an integer)!\n";
 			}
-			if( Integer.parseInt(ratingField.getText())<0 || Integer.parseInt(ratingField.getText())>5 ){
+			if( Double.parseDouble(ratingField.getText())<0.0 || Double.parseDouble(ratingField.getText())>5.0 ){
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.initOwner(dialogStage);
 				alert.setTitle("Invalid Rating");
