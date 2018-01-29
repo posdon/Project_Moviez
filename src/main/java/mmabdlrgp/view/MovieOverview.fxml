@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="500.0" prefWidth="600.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.view.MovieOverviewController">
+   <children>
+      <SplitPane dividerPositions="0.33666666666666667" layoutX="121.0" layoutY="83.0" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <items>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="223.0" prefWidth="174.0">
+               <children>
+                  <SplitPane dividerPositions="0.8919597989949749" layoutX="7.0" layoutY="-2.0" orientation="VERTICAL" prefHeight="399.0" prefWidth="174.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+                           <children>
+                              <TableView fx:id="MovieTable" layoutX="-40.0" layoutY="6.0" prefHeight="334.0" prefWidth="174.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                <columns>
+                                  <TableColumn fx:id="titleColumn" prefWidth="75.0" text="Title" />
+                                </columns>
+                                 <columnResizePolicy>
+                                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                 </columnResizePolicy>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="63.0" prefWidth="295.0">
+                           <children>
+                              <Button layoutX="7.0" layoutY="9.0" mnemonicParsing="false" onAction="#handleMoreInfoMovie" prefHeight="31.0" prefWidth="93.0" text="More" />
+                              <Button layoutX="106.0" layoutY="9.0" mnemonicParsing="false" onAction="#handleRateMovie" prefHeight="31.0" prefWidth="82.0" text="Rate" />
+                           </children>
+                        </AnchorPane>
+                    </items>
+                  </SplitPane>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <SplitPane dividerPositions="0.6313131313131313" layoutX="92.0" layoutY="100.0" orientation="VERTICAL" prefHeight="399.0" prefWidth="393.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+                           <children>
+                              <Label layoutX="14.0" layoutY="14.0" text="Recommended movies" />
+                              <ListView fx:id="listView" layoutX="96.0" layoutY="49.0" prefHeight="235.0" prefWidth="200.0" />
+                           </children>
+                        </AnchorPane>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="91.0" prefWidth="393.0">
+                           <children>
+                              <Label layoutX="14.0" layoutY="12.0" text="Select the distance :" />
+                              <ChoiceBox fx:id="cb" layoutX="225.0" layoutY="7.0" prefWidth="150.0" />
+                              <TextField fx:id="nbUser" layoutX="225.0" layoutY="45.0" prefHeight="27.0" prefWidth="150.0" />
+                              <TextField fx:id="nbReco" layoutX="226.0" layoutY="82.0" prefHeight="27.0" prefWidth="150.0" />
+                              <Label layoutX="16.0" layoutY="50.0" text="Number user :" />
+                              <Label layoutX="16.0" layoutY="87.0" text="Number recommandations :" />
+                              <Button layoutX="149.0" layoutY="128.0" mnemonicParsing="false" onAction="#handleStart" prefHeight="31.0" prefWidth="93.0" text="Start" />
+                              <Button layoutX="343.0" layoutY="158.0" mnemonicParsing="false" onAction="#handleHelp" prefHeight="15.0" prefWidth="34.0" text="Help">
+                                 <font>
+                                    <Font name="Courier Bold" size="9.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </AnchorPane>
+                    </items>
+                  </SplitPane>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+   </children>
+</AnchorPane>

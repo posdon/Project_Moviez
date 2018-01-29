@@ -2,6 +2,11 @@ package mmabdlrgp.Projet_Moviez.model;
 
 import java.io.Serializable;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 public class Movie implements Serializable{
 	
 	/**
@@ -9,41 +14,41 @@ public class Movie implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
  
-	private Integer movieId;
+	private IntegerProperty movieId;
 	
-	private String title;
+	private StringProperty title;
 	
-	private String genres;
+	private StringProperty genres;
 	
-	public Movie(Integer movieId, String title, String genres) {
+	public Movie(int movieId, String title, String genres) {
 		super();
-		this.movieId = movieId;
-		this.title = title;
-		this.genres = genres;
+		this.movieId =  new SimpleIntegerProperty(movieId);
+		 this.title = new SimpleStringProperty(title);
+		this.genres = new SimpleStringProperty(genres);;
 	}
  
-	public Integer getMovieId() {
+	public IntegerProperty getMovieId() {
 		return movieId;
 	}
  
 	public void setMovieId(Integer movieId) {
-		this.movieId = movieId;
+		this.movieId.set(movieId);
 	}
  
-	public String getTitle() {
+	public StringProperty getTitle() {
 		return title;
 	}
  
 	public void setTitle(String title) {
-		this.title = title;
+		this.title.set(title);
 	}
  
-	public String getGenres() {
+	public StringProperty getGenres() {
 		return genres;
 	}
  
 	public void setGenres(String genres) {
-		this.genres = genres;
+		this.genres.set(genres);
 	}
  
 	@Override

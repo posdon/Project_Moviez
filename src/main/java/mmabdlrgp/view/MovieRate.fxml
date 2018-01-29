@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="200.0" prefWidth="400.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.view.MovieRateController">
+   <children>
+      <GridPane layoutX="56.0" layoutY="70.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label text="Rating :">
+               <font>
+                  <Font name="Courier Bold" size="15.0" />
+               </font></Label>
+            <TextField fx:id="ratingField" GridPane.columnIndex="1" />
+         </children>
+      </GridPane>
+      <Button layoutX="256.0" layoutY="132.0" mnemonicParsing="false" onAction="#handleOk" prefHeight="31.0" prefWidth="89.0" text="OK" />
+   </children>
+</AnchorPane>
