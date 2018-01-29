@@ -40,9 +40,17 @@ public class RecommandationModel
 	private List<Integer> movieList = new ArrayList<Integer>();
 	private JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
-	private static int NB_CLOSEST_USER = 5;
-	private static int NB_RECOMMANDATION_RESULT = 5;
+	private int NB_CLOSEST_USER = 5;
+	private int NB_RECOMMANDATION_RESULT = 5;
 	
+	
+	public int getNbUser() {
+		return NB_CLOSEST_USER;
+	}
+	
+	public int getNbRecommandation() {
+		return NB_CLOSEST_USER;
+	}
 	
 	
 	/**

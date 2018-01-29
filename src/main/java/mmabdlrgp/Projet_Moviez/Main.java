@@ -19,6 +19,7 @@ import javafx.stage.Stage;
 import mmabdlrgp.Projet_Moviez.controller.MovieMoreInfoController;
 import mmabdlrgp.Projet_Moviez.controller.MovieOverviewController;
 import mmabdlrgp.Projet_Moviez.controller.MovieRateController;
+import mmabdlrgp.Projet_Moviez.controller.WaitingController;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
 
@@ -64,7 +65,7 @@ public class Main extends Application {
 		this.primaryStage = primaryStage;
 		this.primaryStage.setTitle("MovieApp");
 		initRootLayout();
-		showMovieOverview();
+		showInitializeOverview();
 	}
 	public ObservableList<Movie> getMovieData() {
 		return movieData;
@@ -81,6 +82,19 @@ public class Main extends Application {
 			e.printStackTrace();
 		}
 	}
+	
+	public void showInitializeOverview() {
+		try {
+			FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(Main.class.getResource("./view/Waiting.fxml"));
+			AnchorPane waitingOverview = (AnchorPane) loader.load();
+			rootLayout.setCenter(waitingOverview);
+			WaitingController controller = loader.getController();
+			controller.setMainApp(this,model);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void showMovieOverview() {
 		try {
@@ -93,6 +107,10 @@ public class Main extends Application {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public RecommandationModel getModel() {
+		return model;
 	}
 	
 	public Stage getPrimaryStage() {

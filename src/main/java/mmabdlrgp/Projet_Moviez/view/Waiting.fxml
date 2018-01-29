@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="500.0" prefWidth="600.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.Projet_Moviez.controller.WaitingController">
+   <children>
+		<Label fx:id="label" layoutX="50" layoutY="200.0" prefWidth="600" />                    
+        <Button fx:id="initializeButton" layoutX="225" layoutY="250.0" mnemonicParsing="false" onAction="#handleInitialize" prefHeight="50.0" prefWidth="150.0" text="Initialize" />
+   </children>
+</AnchorPane>

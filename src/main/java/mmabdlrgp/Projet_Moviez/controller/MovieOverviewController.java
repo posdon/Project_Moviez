@@ -13,6 +13,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import mmabdlrgp.Projet_Moviez.Main;
 import mmabdlrgp.Projet_Moviez.model.Movie;
+import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
 
 public class MovieOverviewController {
 	
@@ -33,6 +34,10 @@ public class MovieOverviewController {
 	final ObservableList<String> listItems = FXCollections.observableArrayList("Add Items here");
 	private Main mainApp;
 
+	private boolean isBlocked = false;
+	
+	private RecommandationModel model;
+	
 	public MovieOverviewController() {
 	}
 
@@ -42,7 +47,7 @@ public class MovieOverviewController {
 				cellData -> cellData.getValue().getTitle());
 
 
-		ObservableList<String> availableChoices = FXCollections.observableArrayList("Distance1", "Distance2"); 
+		ObservableList<String> availableChoices = FXCollections.observableArrayList("Euclidian distance", "Manhattan distance"); 
 		cb.setItems(availableChoices);
 		cb.getSelectionModel().select(0);
 		listView.setItems(listItems);
@@ -59,37 +64,47 @@ public class MovieOverviewController {
 
 	public void setMainApp(Main mainApp) {
 		this.mainApp = mainApp;
+		this.model = mainApp.getModel();
+		nbUser.setText(""+model.getNbUser());
+		nbReco.setText(""+model.getNbRecommandation());
 		MovieTable.setItems(mainApp.getMovieData());
 	}	
 
 	@FXML
 	private void handleMoreInfoMovie() {
-		Movie selectedMovie = MovieTable.getSelectionModel().getSelectedItem();
-		if (selectedMovie != null) {
-			mainApp.showMoreInfoMovie(selectedMovie);
-		} else {
-			Alert alert = new Alert(AlertType.WARNING);
-			alert.initOwner(mainApp.getPrimaryStage());
-			alert.setTitle("No Selection");
-			alert.setHeaderText("No Movie Selected");
-			alert.setContentText("Please select a movie in the table.");
-			alert.showAndWait();
+		if(!isBlocked) {
+			Movie selectedMovie = MovieTable.getSelectionModel().getSelectedItem();
+			if (selectedMovie != null) {
+				mainApp.showMoreInfoMovie(selectedMovie);
+			} else {
+				openAlert("No Selection", "No Movie Selected", "Please select a movie in the table.");
+			}
+		}else {
+			openAlert("Wait", "The program is loading", "Please wait a bit to the algorithme to be ready. It can be a bit long (5 min for the first start).");
 		}
 	}
 
 	@FXML
 	private void handleRateMovie() {
-		Movie selectedMovie = MovieTable.getSelectionModel().getSelectedItem();
-		if (selectedMovie != null) {
-			mainApp.showMovieRate(selectedMovie);
-		} else {
-			Alert alert = new Alert(AlertType.WARNING);
-			alert.initOwner(mainApp.getPrimaryStage());
-			alert.setTitle("No Selection");
-			alert.setHeaderText("No Movie Selected");
-			alert.setContentText("Please select a movie in the table.");
-			alert.showAndWait();
+		if(!isBlocked) {
+			Movie selectedMovie = MovieTable.getSelectionModel().getSelectedItem();
+			if (selectedMovie != null) {
+				mainApp.showMovieRate(selectedMovie);
+			} else {
+				openAlert("No Selection", "No Movie Selected", "Please select a movie in the table.");
+			}
+		}else {
+			openAlert("Wait", "The program is loading", "Please wait a bit to the algorithme to be ready. It can be a bit long (5 min for the first start).");
 		}
+	}
+	
+	private void openAlert(String title, String header, String content) {
+		Alert alert = new Alert(AlertType.WARNING);
+		alert.initOwner(mainApp.getPrimaryStage());
+		alert.setTitle(title);
+		alert.setHeaderText(header);
+		alert.setContentText(content);
+		alert.showAndWait();
 	}
 
 	@FXML
@@ -148,6 +163,8 @@ public class MovieOverviewController {
 	@FXML
 	private void handleStart() {
 		if(isInputValid()) {
+			model.setNbClosestUser(Integer.parseInt(nbUser.getText()));
+			model.setNbRecommandation(Integer.parseInt(nbReco.getText()));
 			listItems.add(cb.getSelectionModel().getSelectedItem());
 		}
 	}
