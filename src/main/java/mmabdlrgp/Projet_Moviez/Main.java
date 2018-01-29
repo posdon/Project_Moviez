@@ -29,6 +29,7 @@ public class Main extends Application {
 	private BorderPane rootLayout;
 
 	private ObservableList<Movie> movieData = FXCollections.observableArrayList();
+	
 	public Main() throws NumberFormatException, IOException {
 		String path = "./movies.csv";
 		BufferedReader file = new BufferedReader(new FileReader(path));

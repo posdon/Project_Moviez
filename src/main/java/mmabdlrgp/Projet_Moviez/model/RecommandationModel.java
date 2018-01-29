@@ -40,9 +40,9 @@ public class RecommandationModel
 	
 	
 	
-	private static Map<Integer, Double> currentUserNotation; // Vecteur des notes de l'utilisateur
-	private static List<User> userList; // List of all the users
-	private static List<Integer> movieList;
+	private static Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
+	private static List<User> userList = new ArrayList<User>(); // List of all the users
+	private static List<Integer> movieList = new ArrayList<Integer>();
 	private static JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
 	
 	private static int NB_CLOSEST_USER = 5;

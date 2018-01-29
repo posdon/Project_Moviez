@@ -15,6 +15,7 @@ import mmabdlrgp.Projet_Moviez.Main;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 
 public class MovieOverviewController {
+	
 	@FXML
 	private TableView<Movie> MovieTable;
 	@FXML

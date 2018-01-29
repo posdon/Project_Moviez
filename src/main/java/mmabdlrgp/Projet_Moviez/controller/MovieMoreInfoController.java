@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import mmabdlrgp.Projet_Moviez.model.Movie;
+import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
 
 public class MovieMoreInfoController {
 	@FXML
@@ -14,7 +15,6 @@ public class MovieMoreInfoController {
 	private Label ratingLabel;
 
     private Stage dialogStage;
-    private Movie movie;
 
     @FXML
     private void initialize() {
@@ -25,10 +25,13 @@ public class MovieMoreInfoController {
     }
 
     public void setMovie(Movie movie) {
-        this.movie = movie;
         titleLabel.setText(movie.getTitle().getValue().toString());
         genresLabel.setText(movie.getGenres().getValue().toString());
-        ratingLabel.setText(movie.getMovieId().getValue().toString());
+        if(RecommandationModel.getCurrentUserVector().keySet().contains(movie.getMovieId())) {
+        	ratingLabel.setText(RecommandationModel.getCurrentUserVector().get(movie.getMovieId()).toString());        	
+        }else {
+        	ratingLabel.setText("-Not rated-");
+        }
     }
 
     @FXML
