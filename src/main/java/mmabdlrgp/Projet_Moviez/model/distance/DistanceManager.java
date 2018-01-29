@@ -1,11 +1,14 @@
 package mmabdlrgp.Projet_Moviez.model.distance;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DistanceManager {
 
 	public final static DistanceManager INSTANCE = new DistanceManager();
+		
 	
 	private static Distance currDistance;
 	

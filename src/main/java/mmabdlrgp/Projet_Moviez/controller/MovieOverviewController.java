@@ -1,16 +1,20 @@
 package mmabdlrgp.Projet_Moviez.controller;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.stage.Stage;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import mmabdlrgp.Projet_Moviez.Main;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
@@ -31,7 +35,7 @@ public class MovieOverviewController {
 	private TextField nbReco;
 	private Stage dialogStage;
 
-	final ObservableList<String> listItems = FXCollections.observableArrayList("Add Items here");
+	final ObservableList<String> listItems = FXCollections.observableArrayList();
 	private Main mainApp;
 
 	private boolean isBlocked = false;
@@ -47,11 +51,10 @@ public class MovieOverviewController {
 				cellData -> cellData.getValue().getTitle());
 
 
-		ObservableList<String> availableChoices = FXCollections.observableArrayList("Euclidian distance", "Manhattan distance"); 
+		ObservableList<String> availableChoices = FXCollections.observableArrayList("Euclidian distance", "Manhattan distance", "Cosinus distance"); 
 		cb.setItems(availableChoices);
 		cb.getSelectionModel().select(0);
 		listView.setItems(listItems);
-		listItems.add(cb.getSelectionModel().getSelectedItem());
 		/*cb.getSelectionModel().selectedIndexProperty().addListener(new
 				ChangeListener<Number>() {
 			public void changed(ObservableValue ov,
@@ -165,7 +168,19 @@ public class MovieOverviewController {
 		if(isInputValid()) {
 			model.setNbClosestUser(Integer.parseInt(nbUser.getText()));
 			model.setNbRecommandation(Integer.parseInt(nbReco.getText()));
-			listItems.add(cb.getSelectionModel().getSelectedItem());
+			model.setDistance(cb.getSelectionModel().getSelectedItem().split(" ")[0].toLowerCase());
+			isBlocked = true;
+			Map<Integer,Double> results = model.launchRecommandation();
+			List<Movie> movieList = mainApp.getMovieData();
+			listItems.clear();
+			for(Integer key : results.keySet()) {
+				for(Movie currMovie : movieList) {
+					if(currMovie.getMovieId().intValue() == key) {
+						listItems.add(currMovie.getTitle().getValue());
+					}
+				}
+			}
+			isBlocked = false;
 		}
 	}
 }
