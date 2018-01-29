@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="300.0" prefWidth="400.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.view.MovieMoreInfoController">
+<AnchorPane prefHeight="300.0" prefWidth="400.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.Projet_Moviez.controller.MovieMoreInfoController">
    <children>
       <GridPane layoutX="17.0" layoutY="74.0" prefHeight="89.0" prefWidth="364.0">
         <columnConstraints>

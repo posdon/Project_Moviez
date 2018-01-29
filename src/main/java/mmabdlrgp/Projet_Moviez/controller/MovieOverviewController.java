@@ -1,4 +1,4 @@
-package mmabdlrgp.view;
+package mmabdlrgp.Projet_Moviez.controller;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

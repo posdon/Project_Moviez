@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="200.0" prefWidth="400.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.view.MovieRateController">
+<AnchorPane prefHeight="200.0" prefWidth="400.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="mmabdlrgp.Projet_Moviez.controller.MovieRateController">
    <children>
       <GridPane layoutX="56.0" layoutY="70.0">
         <columnConstraints>

@@ -16,11 +16,11 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import mmabdlrgp.Projet_Moviez.controller.MovieMoreInfoController;
+import mmabdlrgp.Projet_Moviez.controller.MovieOverviewController;
+import mmabdlrgp.Projet_Moviez.controller.MovieRateController;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
-import mmabdlrgp.view.MovieMoreInfoController;
-import mmabdlrgp.view.MovieOverviewController;
-import mmabdlrgp.view.MovieRateController;
 
 public class Main extends Application {
 	
@@ -69,7 +69,7 @@ public class Main extends Application {
 	public void initRootLayout() {
 		try {
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(Main.class.getResource("../view/RootLayout.fxml"));
+			loader.setLocation(Main.class.getResource("./view/RootLayout.fxml"));
 			rootLayout = (BorderPane) loader.load();
 			Scene scene = new Scene(rootLayout);
 			primaryStage.setScene(scene);
@@ -82,7 +82,7 @@ public class Main extends Application {
 	public void showMovieOverview() {
 		try {
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(Main.class.getResource("../view/MovieOverview.fxml"));
+			loader.setLocation(Main.class.getResource("./view/MovieOverview.fxml"));
 			AnchorPane movieOverview = (AnchorPane) loader.load();
 			rootLayout.setCenter(movieOverview);
 			MovieOverviewController controller = loader.getController();
@@ -100,7 +100,7 @@ public class Main extends Application {
 	public void showMoreInfoMovie(Movie movie) {
 		try {
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(Main.class.getResource("../view/MovieMoreInfo.fxml"));
+			loader.setLocation(Main.class.getResource("./view/MovieMoreInfo.fxml"));
 			AnchorPane page = (AnchorPane) loader.load();
 			Stage dialogStage = new Stage();
 			dialogStage.setTitle("More Movie Details");
@@ -120,7 +120,7 @@ public class Main extends Application {
 	public boolean showMovieRate(Movie movie) {
 		try {
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(Main.class.getResource("../view/MovieRate.fxml"));
+			loader.setLocation(Main.class.getResource("./view/MovieRate.fxml"));
 			AnchorPane page = (AnchorPane) loader.load();
 			Stage dialogStage = new Stage();
 			dialogStage.setTitle("Rate Movie");

@@ -1,4 +1,4 @@
-package mmabdlrgp.view;
+package mmabdlrgp.Projet_Moviez.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
