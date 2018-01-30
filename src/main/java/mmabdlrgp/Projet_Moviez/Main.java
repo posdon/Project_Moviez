@@ -1,9 +1,9 @@
 package mmabdlrgp.Projet_Moviez;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -30,6 +30,7 @@ public class Main extends Application {
 	private BorderPane rootLayout;
 
 	private ObservableList<Movie> movieData = FXCollections.observableArrayList();
+	private Map<Integer,Double> currentUserVector;
 	
 	private RecommandationModel model = new RecommandationModel();
 	
@@ -150,7 +151,7 @@ public class Main extends Application {
 			Scene scene = new Scene(page);
 			dialogStage.setScene(scene);
 			MovieRateController controller = loader.getController();
-			controller.setDialogStage(dialogStage, model);
+			controller.setDialogStage(this, dialogStage, model);
 			controller.setMovie(movie);
 			dialogStage.showAndWait();
 			return controller.isOkClicked();
@@ -159,30 +160,43 @@ public class Main extends Application {
 			return false;
 		}
 	}
+	
+	public void setCurrentVector(Map<Integer,Double> vector) {
+		this.currentUserVector = new HashMap<Integer, Double>(vector);
+	}
+	
+	public void putCurrentVector(Integer id, Double rate) {
+		currentUserVector.put(id, rate);
+	}
+	
+	public Map<Integer,Double> getCurrentVector(){
+		return currentUserVector;
+	}
 
 	public static void main(String[] args) {
 		
-		/*
-		RecommandationModel.initialize();
+		
+		RecommandationModel model = new RecommandationModel();
+		model.initialize();
         
         Scanner scanner = new Scanner(System.in);
         System.out.println("Waiting your order chief !");
         while(scanner.hasNextLine()) {
         	String currLine = scanner.nextLine();
         	if(currLine.startsWith("work")) {
-        		Map<Integer,Double> recommandation = RecommandationModel.launchRecommandation();
+        		Map<Integer,Double> recommandation = model.launchRecommandation();
 	        	for(Integer movieId : recommandation.keySet()) {
 	        		System.out.println(movieId+" "+recommandation.get(movieId));
 	        	}
 	        }else if(currLine.startsWith("set user")) {
-	        	RecommandationModel.setNbClosestUser(Integer.parseInt(scanner.nextLine()));
+	        	//model.setNbClosestUser(Integer.parseInt(scanner.nextLine()));
         	}else if(currLine.startsWith("set movie")) {
-        		RecommandationModel.setNbRecommandation(Integer.parseInt(scanner.nextLine()));
+        		model.setNbRecommandation(Integer.parseInt(scanner.nextLine()));
         	}
-        }*/
+        }
 		
 		
-		launch(args);
+		//launch(args);
 	}
 }
 

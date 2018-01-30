@@ -169,6 +169,7 @@ public class MovieOverviewController {
 			model.setNbClosestUser(Integer.parseInt(nbUser.getText()));
 			model.setNbRecommandation(Integer.parseInt(nbReco.getText()));
 			model.setDistance(cb.getSelectionModel().getSelectedItem().split(" ")[0].toLowerCase());
+			model.setCurrentUserVector(new HashMap<Integer,Double>(mainApp.getCurrentVector()));
 			isBlocked = true;
 			Map<Integer,Double> results = model.launchRecommandation();
 			List<Movie> movieList = mainApp.getMovieData();

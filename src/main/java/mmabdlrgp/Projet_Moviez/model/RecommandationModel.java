@@ -7,9 +7,11 @@ import java.util.Map;
 import java.util.Scanner;import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.recommendation.ALS;
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel;
 import org.apache.spark.mllib.recommendation.Rating;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -24,129 +26,103 @@ import scala.Tuple2;
  * Hello world!
  *
  */
-public class RecommandationModel 
+public class RecommandationModel
 {
 
-	private final static String RATING_PATH = "./ratings.csv";
+	private final static String RATING_PATH = "./ratings2.csv";
 	private final static String MOVIE_PATH = "./movies.csv";
 	private final static String USER_PATH = "./user.csv";
 	
 	private static SparkSession spark;
+	private static SQLContext sqlContext;
+	private static JavaSparkContext jspark;
 	
 	
+	private static Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
+	private static  List<User> userList = new ArrayList<User>(); // List of all the users
+	private static List<Integer> movieList = new ArrayList<Integer>();
+	private static JavaRDD<Rating> ratingRDD;
 	
-	private Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
-	private List<User> userList = new ArrayList<User>(); // List of all the users
-	private List<Integer> movieList = new ArrayList<Integer>();
-	private JavaPairRDD<Integer,Map<Integer,Double>> alsPairResults; // Matrice résultat d'ALS
-	
-	private int NB_CLOSEST_USER = 5;
-	private int NB_RECOMMANDATION_RESULT = 5;
+//	private static int NB_CLOSEST_USER = 5;
+	private static int NB_RECOMMANDATION_RESULT = 10;
+	//NEW
+	private static int NB_RANK = 10;
+	private static int NB_ITERATION = 10;
 	
 	
-	public int getNbUser() {
-		return NB_CLOSEST_USER;
-	}
+//	public int getNbUser() {
+//		return NB_CLOSEST_USER;
+//	}
 	
 	public int getNbRecommandation() {
-		return NB_CLOSEST_USER;
+		return NB_RECOMMANDATION_RESULT;
 	}
 	
+	public int getRank() {
+		return NB_RANK;
+	}
 	
-	/**
-	 * Retourne l'entier de la ligne row à l'indice index
-	 * @param row
-	 * @param index
-	 * @return
-	 */
-	public int getInt(Row row, int index) {
-		return Integer.parseInt(row.getString(index));
+	public int getIteration() {
+		return NB_ITERATION;
+	}
+	
+	public JavaRDD<Rating> convertFromMapToRDDRating(Map<Integer,Double> map){
+		List<Tuple2<Integer,Double>> tempList = new ArrayList<Tuple2<Integer,Double>>();
+		for(Integer key : map.keySet()) {
+			tempList.add(new Tuple2<Integer,Double>(key, map.get(key)));
+		}
+		
+		return jspark.parallelizePairs(tempList).map(elem -> new Rating(-1,elem._1,elem._2));
 	}
 	
 	public Map<Integer,Double> launchRecommandation() {
-		/**
-    	 * Affect weight for each user
-    	 */
-    	Map<Integer,Double> userWeight = new HashMap<Integer,Double>();
-    	for(User u : userList) {
-    		userWeight.put(u.getUserId(), 1.0);
-    	}
-    	
-    	/**
-    	 * Calculate betweenness from each user and the current user
-    	 */
-    	JavaPairRDD<Integer,Map<Integer,Double>> filterAlsPairResults = alsPairResults.filter( tuple -> {
-    		for(Integer movieId : currentUserNotation.keySet()) {
-    			if(!tuple._2.containsKey(movieId)) {
-    				return false;
-    			}
-    		}
-    		return true;
-    	});
-    	
-    	Map<Integer, Map<Integer,Double>> alsMap = filterAlsPairResults.collectAsMap();
-    	
-    	System.out.println("Start distance calcul");
-    	Map<Integer, Double> betweenessVector = DistanceManager.distance(currentUserNotation, alsMap, userWeight);
-    	System.out.println("End turn");
-    	
-    	/**
-    	 * Get the X first closest user
-    	 */
-    	MapExtractor extractor = MapExtractor.INSTANCE;
-    	extractor.setMap(betweenessVector);
-    	extractor.setNbResult(NB_CLOSEST_USER);
-    	List<Tuple2<Integer, Double>> closestUser = extractor.getXFirstResults();
-    	List<Integer> closestUserList = new ArrayList<Integer>();
-    	for(Tuple2<Integer,Double> tuple : closestUser) {
-    		closestUserList.add(tuple._1);
-    		System.out.println(tuple._1+" "+tuple._2);
-    	}
-    	
-    	
-    	/**
-    	 * Theorical note movies
-    	 */
-    	Map<Integer,Double> currHypoteticalMovieNotation = new HashMap<Integer,Double>();
-    	Map<Integer,Map<Integer,Double>> filteredClosestUser = filterAlsPairResults.filter(tuple -> closestUserList.contains(tuple._1)).collectAsMap();
-    	for(Integer userId : filteredClosestUser.keySet()) {
-			Map<Integer,Double> currRates = filteredClosestUser.get(userId);
-			for(Integer movieId : currRates.keySet()) {
-				if(currentUserNotation.keySet().contains(movieId)) {
-					System.out.println("Film already noted");
-				}else {
-					if(!currHypoteticalMovieNotation.containsKey(movieId)) {
-						currHypoteticalMovieNotation.put(movieId, 0.0);
-					}
-					Double exValue = currHypoteticalMovieNotation.get(movieId);
-					currHypoteticalMovieNotation.put(movieId, exValue+currRates.get(movieId));
-				}
-			}
-    	}
+		
+		JavaRDD<Rating> allElems = jspark.union(convertFromMapToRDDRating(currentUserNotation),ratingRDD);
+		
+		System.out.println("Starting ALS..."); 
+        ALS als = new ALS();
+        MatrixFactorizationModel model = als.setRank(NB_RANK).setIterations(NB_ITERATION).run(allElems);
+        System.out.println("ALS initialized.");
+        
+        List<Tuple2<Integer,Integer>> currEmptyPlace = new ArrayList<Tuple2<Integer,Integer>>();
+        for(Integer movieId : movieList) {
+        	if(!currentUserNotation.containsKey(movieId)) {	
+        		currEmptyPlace.add(new Tuple2<Integer,Integer>(-1,movieId));
+        	}        	
+        }
+        
+        
+		Map<Integer, Double> alsResults = model.predict(jspark.parallelize(currEmptyPlace).mapToPair(f -> f)).mapToPair(rating -> new Tuple2<Integer,Double>(rating.product(),rating.rating())).collectAsMap();
+        
+        
     	
     	/** 
     	 * Get the X first closest movies
     	 */
-    	extractor.setMap(currHypoteticalMovieNotation);
+    	MapExtractor extractor = MapExtractor.INSTANCE;
+    	extractor.setMap(alsResults);
     	extractor.setNbResult(NB_RECOMMANDATION_RESULT);
     	List<Tuple2<Integer,Double>> recommandateMovie = extractor.getXFirstResults();
     	Map<Integer,Double> result = new HashMap<Integer,Double>();
     	for(Tuple2<Integer,Double> tuple : recommandateMovie) {
     		result.put(tuple._1, tuple._2);
+    		//System.out.println("Movie "+tuple._1+" "+tuple._2);
     	}
     	return result;
 	}
 	
 	public void initialize() {
 		System.out.println("Starting initalization");
+		
 		/**
 		 * Create SQL context
 		 */
 		spark = new Builder()
 			     .appName("Reommendation Engine")
 			     .master("local")
-			     .getOrCreate();		
-		
+			     .getOrCreate();	
+		jspark = new JavaSparkContext(spark.sparkContext());
+		sqlContext = spark.sqlContext();
 		
 		final DataFrameReader dataFrameReader = spark.read();
 		dataFrameReader.option("header", "true");
@@ -159,7 +135,7 @@ public class RecommandationModel
 		movieList = dataFrameReader.csv(MOVIE_PATH).javaRDD()
 				.map(row -> Integer.parseInt(row.getAs(0))).collect();
 		
-		JavaRDD<Rating> ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
+		ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
 
 		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
@@ -168,38 +144,6 @@ public class RecommandationModel
 		userList = ratingsGroupByUser.keys().map(id -> new User(id)).collect();
 
 		System.out.println("End data loading.");
-		
-		
-		
-		/**
-		 * Split into training and testing sets
-		 */
-		System.out.println("Start set splitting...");
-        JavaRDD<Rating>[] ratingSplits = ratingRDD.randomSplit(new double[] { 0.8, 0.2 });
-        JavaRDD<Rating> trainingRatingRDD = ratingSplits[0];
-        JavaRDD<Rating> testRatingRDD = ratingSplits[1];
-        System.out.println("End set splitting.");
-        //printExamplePostSplittingSet(trainingRatingRDD,testRatingRDD);
-
-        /**
-         *  Learning the prediction model using ALS (Alternating Least Squares)
-         */
-        System.out.println("Starting ALS..."); // 13:43:03
-        ALS als = new ALS();
-        MatrixFactorizationModel model = als.setRank(20).setIterations(10).run(trainingRatingRDD);
-        System.out.println("ALS initialized.");
-        
-        JavaPairRDD<Integer, Integer> testUserMovieRDD = testRatingRDD.mapToPair(rating -> new Tuple2<Integer, Integer>(rating.user(), rating.product()));
-        JavaRDD<Rating> alsResults = model.predict(testUserMovieRDD).cache();
-        
-         alsPairResults = alsResults.mapToPair(rating -> {
-        	Tuple2<Integer,Map<Integer,Double>> result = new Tuple2<Integer,Map<Integer,Double>>(rating.user(),new HashMap<Integer,Double>());
-        	result._2.put(rating.product(),rating.rating());
-        	return result;
-        }).reduceByKey((map1,map2) -> {
-        	map1.putAll(map2);
-        	return map1;
-        });
          
          /**
           * Load the current user
@@ -215,31 +159,32 @@ public class RecommandationModel
     	return currentUserNotation;
     }
     
-    public void addOrModifyUserNotation(Integer movieId, Double note) {
-    	if(note >= 0.0 || note <= 5.0) {
-    		currentUserNotation.put(movieId,note);
-    	}else {
-    		System.out.println("Error :: Note isn't in the good format");
-    	}
+    public void setCurrentUserVector(Map<Integer,Double> vector) {
+    	currentUserNotation = vector;
     }
     
     public Double suppressUserNotation(Integer movieId) {
     	return currentUserNotation.remove(movieId);
     }
     
-    public void setDistance(String distanceName) {
-    	DistanceManager.setDistance(distanceName);
-    }
+//    public void setDistance(String distanceName) {
+//    	System.out.println("Set distance as : "+distanceName);
+//    	DistanceManager.setDistance(distanceName);
+//    }
     
     public void setNbRecommandation(int i) {
-    	if(i > 0 && i<movieList.size()) 
+    	if(i > 0 && i<movieList.size()) {
+    		System.out.println("Set number of recommandation to "+i);
     		NB_RECOMMANDATION_RESULT = i;   	
+    	}
     }
     
-    public void setNbClosestUser(int i) {
-    	if(i > 0 && i<userList.size())
-    		NB_CLOSEST_USER = i;
-    }
+//    public void setNbClosestUser(int i) {
+//    	if(i > 0 && i<userList.size()) {
+//    		System.out.println("Set number of user to "+i);
+//    		NB_CLOSEST_USER = i;
+//    	}
+//    }
     
     
     /*

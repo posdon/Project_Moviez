@@ -1,10 +1,14 @@
 package mmabdlrgp.Projet_Moviez.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import mmabdlrgp.Projet_Moviez.Main;
 import mmabdlrgp.Projet_Moviez.model.Movie;
 import mmabdlrgp.Projet_Moviez.model.RecommandationModel;
 
@@ -17,14 +21,17 @@ public class MovieRateController {
 	private Movie movie;
 	private boolean okClicked = false;
 	private RecommandationModel model;
+	private Main mainApp;
 	
 	@FXML
 	private void initialize() {
 	}
 
-	public void setDialogStage(Stage dialogStage, RecommandationModel model) {
+	public void setDialogStage(Main mainApp, Stage dialogStage, RecommandationModel model) {
 		this.dialogStage = dialogStage;
 		this.model = model;
+		this.mainApp = mainApp;
+		mainApp.setCurrentVector(model.getCurrentUserVector());
 	}
 
 	public void setMovie(Movie movie) {
@@ -43,7 +50,13 @@ public class MovieRateController {
 	@FXML
 	private void handleOk() {
 		if (isInputValid()) {
-			model.addOrModifyUserNotation(movie.getMovieId().intValue(), Double.parseDouble(ratingField.getText()));
+			double note = Double.parseDouble(ratingField.getText());
+		    if(note >= 0.0 || note <= 5.0) {
+	    		mainApp.putCurrentVector(movie.getMovieId().intValue(),note);
+	    	}else {
+	    		System.out.println("Error :: Note isn't in the good format");
+	    	}
+		    
 			okClicked = true;
 			dialogStage.close();
 		}

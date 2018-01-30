@@ -12,7 +12,7 @@ public class MapExtractor {
 	/**
 	 * Will extract the nbResult higher results from the map
 	 */
-public final static MapExtractor INSTANCE = new MapExtractor();
+	public final static MapExtractor INSTANCE = new MapExtractor();
 	
 	private Map<Integer,Double> map;
 	private int nbResult;
@@ -29,7 +29,7 @@ public final static MapExtractor INSTANCE = new MapExtractor();
 	}
 	
 	public void setMap(Map<Integer,Double> mapGiven) {
-		map = mapGiven;
+		map = new HashMap<Integer,Double>(mapGiven);
 	}
 	
 	public List<Tuple2<Integer,Double>> getXFirstResults(){

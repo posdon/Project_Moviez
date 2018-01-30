@@ -38,17 +38,20 @@ public class DistanceManager {
 		
 		Map<Integer,Double> weightlessBetweeness = new HashMap<Integer,Double>();
 		for(Integer userId : otherRatings.keySet()) {
-			weightlessBetweeness.put(userId, currDistance.distance(currentRating, otherRatings.get(userId)));
+			Double distance = currDistance.distance(currentRating, otherRatings.get(userId));
+			System.out.println("Add into weightless "+userId+" "+distance);
+			weightlessBetweeness.put(userId, distance);
 		}
 		return applyWeightAndConvertToBetweeness(weightlessBetweeness, userWeight);
 	}
 	
 	private static Map<Integer, Double> applyWeightAndConvertToBetweeness(Map<Integer, Double> weightlessBetweeness,
 			Map<Integer, Double> userWeight) {
+		
 		Map<Integer, Double> result = new HashMap<Integer,Double>();
 		for(Integer userId : weightlessBetweeness.keySet()) {
+			System.out.println("Add into weightfull "+userId+" "+weightlessBetweeness.get(userId));
 			if(weightlessBetweeness.get(userId) == 0) {
-				// Value max
 				result.put(userId, 1.0);
 			}else {
 				System.out.println("Should be 1 :: "+userWeight.get(userId)+" "+weightlessBetweeness.get(userId));
