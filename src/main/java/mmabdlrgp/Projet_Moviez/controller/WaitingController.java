@@ -19,6 +19,8 @@ public class WaitingController {
     private RecommandationModel model;
 
     
+    private boolean isClicked = false;
+    
     public WaitingController() {
     	
     }
@@ -36,8 +38,11 @@ public class WaitingController {
 
     @FXML
     public void handleInitialize() {
-        initializeButton.setText("Wait a moment...");
-        model.initialize();
-        mainApp.showMovieOverview();
+    	if(!isClicked) {
+    		isClicked = true;
+    		initializeButton.setText("Wait a moment...");
+        	model.initialize();
+        	mainApp.showMovieOverview();
+    	}
     }
 }
