@@ -26,11 +26,12 @@ public class MovieOverviewController {
 	@FXML
 	private TableColumn<Movie, String> titleColumn;
 	@FXML 
-	ChoiceBox<String> cb;
-	@FXML 
 	private ListView<String> listView;
 	@FXML
-	private TextField nbUser;
+	private TextField nbRank;
+	@FXML
+	private TextField nbIteration;
+	
 	@FXML
 	private TextField nbReco;
 	private Stage dialogStage;
@@ -51,9 +52,6 @@ public class MovieOverviewController {
 				cellData -> cellData.getValue().getTitle());
 
 
-		ObservableList<String> availableChoices = FXCollections.observableArrayList("Euclidian distance", "Manhattan distance", "Cosinus distance"); 
-		cb.setItems(availableChoices);
-		cb.getSelectionModel().select(0);
 		listView.setItems(listItems);
 		/*cb.getSelectionModel().selectedIndexProperty().addListener(new
 				ChangeListener<Number>() {
@@ -68,7 +66,8 @@ public class MovieOverviewController {
 	public void setMainApp(Main mainApp) {
 		this.mainApp = mainApp;
 		this.model = mainApp.getModel();
-		nbUser.setText(""+model.getNbUser());
+		nbRank.setText(""+model.getRank());
+		nbIteration.setText(""+model.getIteration());
 		nbReco.setText(""+model.getNbRecommandation());
 		MovieTable.setItems(mainApp.getMovieData());
 	}	
@@ -125,7 +124,7 @@ public class MovieOverviewController {
 	private boolean isInputValid() {
 		String errorMsg = "";
 
-		if (nbUser.getText() == null || nbUser.getText().length() == 0) {
+		if (nbRank.getText() == null || nbRank.getText().length() == 0 || nbIteration.getText() == null || nbIteration.getText().length() == 0) {
 			errorMsg += "Number User Or Number Recommandations not valid!\n";
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.initOwner(dialogStage);
@@ -138,7 +137,8 @@ public class MovieOverviewController {
 
 		} else {
 			try {
-				Integer.parseInt(nbUser.getText());
+				Integer.parseInt(nbRank.getText());
+				Integer.parseInt(nbIteration.getText());
 				Integer.parseInt(nbReco.getText());
 			} catch (NumberFormatException e) {
 				errorMsg += "Number User Or Number Recommandations Not valid (must be an integer)!\n";
@@ -149,7 +149,7 @@ public class MovieOverviewController {
 				alert.setContentText(errorMsg);
 				alert.showAndWait();
 			}
-			if( Integer.parseInt(nbReco.getText())<0 || Integer.parseInt(nbUser.getText())<0 ){
+			if( Integer.parseInt(nbReco.getText())<0 || Integer.parseInt(nbIteration.getText())<0 || Integer.parseInt(nbRank.getText())<0 ){
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.initOwner(dialogStage);
 				alert.setTitle("Invalid Number User Or Number Recommandations");
@@ -166,9 +166,9 @@ public class MovieOverviewController {
 	@FXML
 	private void handleStart() {
 		if(isInputValid()) {
-			model.setNbClosestUser(Integer.parseInt(nbUser.getText()));
+			model.setNbRank(Integer.parseInt(nbRank.getText()));
+			model.setNbIteration(Integer.parseInt(nbIteration.getText()));
 			model.setNbRecommandation(Integer.parseInt(nbReco.getText()));
-			model.setDistance(cb.getSelectionModel().getSelectedItem().split(" ")[0].toLowerCase());
 			model.setCurrentUserVector(new HashMap<Integer,Double>(mainApp.getCurrentVector()));
 			isBlocked = true;
 			Map<Integer,Double> results = model.launchRecommandation();

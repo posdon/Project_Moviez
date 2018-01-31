@@ -176,7 +176,7 @@ public class Main extends Application {
 	public static void main(String[] args) {
 		
 		
-		RecommandationModel model = new RecommandationModel();
+		/*RecommandationModel model = new RecommandationModel();
 		model.initialize();
         
         Scanner scanner = new Scanner(System.in);
@@ -193,10 +193,10 @@ public class Main extends Application {
         	}else if(currLine.startsWith("set movie")) {
         		model.setNbRecommandation(Integer.parseInt(scanner.nextLine()));
         	}
-        }
+        }*/
 		
 		
-		//launch(args);
+		launch(args);
 	}
 }
 

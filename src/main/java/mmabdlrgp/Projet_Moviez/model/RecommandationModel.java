@@ -171,11 +171,25 @@ public class RecommandationModel
 //    	System.out.println("Set distance as : "+distanceName);
 //    	DistanceManager.setDistance(distanceName);
 //    }
-    
+
     public void setNbRecommandation(int i) {
     	if(i > 0 && i<movieList.size()) {
     		System.out.println("Set number of recommandation to "+i);
     		NB_RECOMMANDATION_RESULT = i;   	
+    	}
+    }
+    
+    public void setNbRank(int i) {
+    	if(i > 0 && i<movieList.size()) {
+    		System.out.println("Set number of recommandation to "+i);
+    		NB_RANK = i;   	
+    	}
+    }
+    public void 
+    setNbIteration(int i) {
+    	if(i > 0 && i<movieList.size()) {
+    		System.out.println("Set number of recommandation to "+i);
+    		NB_ITERATION = i;   	
     	}
     }
     
