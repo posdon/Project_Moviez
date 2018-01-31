@@ -167,6 +167,7 @@ public class Main extends Application {
 	
 	public void putCurrentVector(Integer id, Double rate) {
 		currentUserVector.put(id, rate);
+		model.setCurrentUserVector(currentUserVector);
 	}
 	
 	public Map<Integer,Double> getCurrentVector(){

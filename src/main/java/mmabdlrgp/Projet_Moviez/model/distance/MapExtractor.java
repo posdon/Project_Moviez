@@ -1,6 +1,7 @@
-package mmabdlrgp.Projet_Moviez.model;
+package mmabdlrgp.Projet_Moviez.model.distance;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

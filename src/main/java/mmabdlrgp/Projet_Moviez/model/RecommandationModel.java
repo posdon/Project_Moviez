@@ -1,25 +1,21 @@
 package mmabdlrgp.Projet_Moviez.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.spark.api.java.JavaPairRDD;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.recommendation.ALS;
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel;
 import org.apache.spark.mllib.recommendation.Rating;
-import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
-import mmabdlrgp.Projet_Moviez.model.distance.DistanceManager;
 import scala.Tuple2;
 
 /**
@@ -29,7 +25,7 @@ import scala.Tuple2;
 public class RecommandationModel
 {
 
-	private final static String RATING_PATH = "./ratings2.csv";
+	private final static String RATING_PATH = "./ratings.csv";
 	private final static String MOVIE_PATH = "./movies.csv";
 	private final static String USER_PATH = "./user.csv";
 	
@@ -39,7 +35,6 @@ public class RecommandationModel
 	
 	
 	private static Map<Integer, Double> currentUserNotation = new HashMap<Integer,Double>(); // Vecteur des notes de l'utilisateur
-	private static  List<User> userList = new ArrayList<User>(); // List of all the users
 	private static List<Integer> movieList = new ArrayList<Integer>();
 	private static JavaRDD<Rating> ratingRDD;
 	
@@ -88,26 +83,34 @@ public class RecommandationModel
         for(Integer movieId : movieList) {
         	if(!currentUserNotation.containsKey(movieId)) {	
         		currEmptyPlace.add(new Tuple2<Integer,Integer>(-1,movieId));
-        	}        	
+        	}else {
+        		System.out.println("You watched  : "+movieId);
+        	}
         }
         
         
-		Map<Integer, Double> alsResults = model.predict(jspark.parallelize(currEmptyPlace).mapToPair(f -> f)).mapToPair(rating -> new Tuple2<Integer,Double>(rating.product(),rating.rating())).collectAsMap();
-        
+		List<Tuple2<Integer, Double>> alsResults = new ArrayList<Tuple2<Integer,Double>>(model.predict(jspark.parallelize(currEmptyPlace).mapToPair(f -> f)).map(rating -> new Tuple2<Integer,Double>(rating.product(),rating.rating())).collect());
         
     	
     	/** 
     	 * Get the X first closest movies
     	 */
-    	MapExtractor extractor = MapExtractor.INSTANCE;
-    	extractor.setMap(alsResults);
-    	extractor.setNbResult(NB_RECOMMANDATION_RESULT);
-    	List<Tuple2<Integer,Double>> recommandateMovie = extractor.getXFirstResults();
-    	Map<Integer,Double> result = new HashMap<Integer,Double>();
-    	for(Tuple2<Integer,Double> tuple : recommandateMovie) {
-    		result.put(tuple._1, tuple._2);
-    		//System.out.println("Movie "+tuple._1+" "+tuple._2);
-    	}
+		alsResults.sort(new Comparator<Tuple2<Integer,Double>>(){
+
+			@Override
+			public int compare(Tuple2<Integer, Double> o1, Tuple2<Integer, Double> o2) {
+				
+				return (o1._2() < o2._2())?1:-1;
+			}
+		});
+		
+		
+		Map<Integer,Double> result = new HashMap<Integer,Double>();
+		
+		for(int i=0; i<NB_RECOMMANDATION_RESULT; i++) {
+			System.out.println("Sorted : "+alsResults.get(i)._1()+" "+alsResults.get(i)._2());
+			result.put(alsResults.get(i)._1, alsResults.get(i)._2);
+		}
     	return result;
 	}
 	
@@ -137,11 +140,6 @@ public class RecommandationModel
 		
 		ratingRDD = dataFrameReader.csv(RATING_PATH).javaRDD()
 				.map(row -> new Rating(Integer.parseInt(row.getAs(0)),Integer.parseInt(row.getAs(1)),Double.parseDouble(row.getAs(2))));
-
-		JavaPairRDD<Integer, Iterable<Rating>> ratingsGroupByUser = ratingRDD.groupBy(rating ->rating.user());
-		
-		// Warning : Need the ratings group by or you will have one user by ratings, and not by idUser
-		userList = ratingsGroupByUser.keys().map(id -> new User(id)).collect();
 
 		System.out.println("End data loading.");
          
@@ -185,8 +183,8 @@ public class RecommandationModel
     		NB_RANK = i;   	
     	}
     }
-    public void 
-    setNbIteration(int i) {
+    
+    public void setNbIteration(int i) {
     	if(i > 0 && i<movieList.size()) {
     		System.out.println("Set number of recommandation to "+i);
     		NB_ITERATION = i;   	
